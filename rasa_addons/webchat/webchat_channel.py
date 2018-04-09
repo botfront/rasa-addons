@@ -93,8 +93,10 @@ class SocketInputChannel(HttpInputChannel):
     def _record_messages(self, on_message):
         # type: (Callable[[UserMessage], None]) -> None
         from flask import Flask
+        from flask_cors import CORS
 
         app = Flask(__name__)
+        CORS(app)
         app.config['SECRET_KEY'] = 'secret!'
 
         for component in self.listener_components:
@@ -115,5 +117,7 @@ class SocketInputChannel(HttpInputChannel):
         def handle_message(message):
             on_message(UserMessage(message, WebchatBot(), request.sid))
             print request
+
+        cors = CORS(app, resources={r"*": {"origins": "*"}})
 
         socketio.run(app, port=self.http_port, host='0.0.0.0')
