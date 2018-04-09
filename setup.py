@@ -5,6 +5,7 @@ setup(
     description='Rasa Add-ons',
     version='0.1',
     author='Nathan Zylbersztejn',
+    install_requires=['flask', 'flask_socketio'],
     licence='Apache 2.0',
     url='http://mrbot.ai',
     author_email='human@mrbot.ai',
