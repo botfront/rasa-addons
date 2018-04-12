@@ -7,11 +7,10 @@ logger = logging.getLogger(__name__)
 
 
 class WebchatBot(OutputChannel):
-    """A bot that uses fb-messenger to communicate."""
 
     def send(self, recipient_id, message):
         # type: (Text, Any) -> None
-        """Sends a message to the recipient using the messenger client."""
+        """Sends a message to the recipient."""
         emit(message, room=recipient_id)
 
     def send_text_message(self, recipient_id, message):
@@ -110,14 +109,13 @@ class SocketInputChannel(HttpInputChannel):
 
         @socketio.on('connect')
         def on_connect():
-            print "connect:"+request.sid
-            print request
+            pass
 
         @socketio.on('user_uttered')
         def handle_message(message):
             on_message(UserMessage(message, WebchatBot(), request.sid))
             print request
 
-        cors = CORS(app, resources={r"*": {"origins": "*"}})
+        cors = CORS(app, resources={r"*": {"origins": "*"}})  # TODO change that
 
         socketio.run(app, port=self.http_port, host='0.0.0.0')
