@@ -1,6 +1,9 @@
-## Rasa channel for the [Web chat widget](https://github.com/mrbot-ai/webchat)
+## Installation
+```bash
+pip install git+https://github.com/mrbot-ai/rasa-addons
+```
 
-To use with https://github.com/mrbot-ai/webchat
+## Rasa channel for the [Web chat widget](https://github.com/mrbot-ai/webchat)
 
 ### Usage
 
@@ -36,5 +39,6 @@ buy:
 Then load your agent as follows:
 
 ```python
+from rasa_addons.superagent import SuperAgent
 agent = SuperAgent.load(POLICY_PATH, allowed_entities_filename='allowed_entities.yml')
 ```
