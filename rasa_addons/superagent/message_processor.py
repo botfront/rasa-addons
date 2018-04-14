@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import os
 
-from rasa_addons.superagent.allowed_entities import AllowedEntities
+from rasa_addons.superagent.rules import Rules
 from rasa_core.actions import Action
 from rasa_core.events import UserUttered, ActionExecuted, SlotSet, UserUtteranceReverted, ActionReverted
 from rasa_core.processor import MessageProcessor
@@ -25,11 +25,11 @@ class SuperMessageProcessor(MessageProcessor):
                  max_number_of_predictions=10,  # type: int
                  message_preprocessor=None,  # type: Optional[LambdaType]
                  on_circuit_break=None,  # type: Optional[LambdaType]
-                 allowed_entities_file=None  # type: Optional[str]
+                 rules=None  # type: Optional[str]
                  ):
 
-        if allowed_entities_file is not None:
-            self.allowed_entities = AllowedEntities(allowed_entities_file)
+        if rules is not None:
+            self.rules = Rules(rules)
         super(SuperMessageProcessor, self).__init__(
             interpreter,
             policy_ensemble,
@@ -45,8 +45,9 @@ class SuperMessageProcessor(MessageProcessor):
 
         parse_data = self._parse_message(message)
 
-        if self.allowed_entities:
-            self.allowed_entities.filter_entities(parse_data)
+        if self.rules:
+            self.rules.substitute_intent(parse_data, tracker)
+            self.rules.filter_entities(parse_data)
 
         # don't ever directly mutate the tracker
         # - instead pass its events to log
@@ -59,12 +60,8 @@ class SuperMessageProcessor(MessageProcessor):
         logger.debug("Logged UserUtterance - "
                      "tracker now has {} events".format(len(tracker.events)))
 
-    def _clear_unexpected_entities(self, parse_data):
-        filtered = filter(lambda ent: ent['entity'] in self.allowed_entities[parse_data['intent']['name']],
-                          parse_data['entities'])
-        if len(filtered) < len(parse_data['entities']):
-            # logging first
-            logger.warn("entity(ies) were removed from parse stories")
-            parse_data['entities'] = filtered
+
+
+
 
 

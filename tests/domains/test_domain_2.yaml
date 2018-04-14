@@ -1,0 +1,34 @@
+actions:
+- utter_4
+- utter_5
+- package.Action3
+- package.Action4
+templates:
+  utter_4:
+  - text: utter_4
+  utter_5:
+  - text: utter_5
+    elements:
+    - type: Note
+      content: c2
+      attachment:
+      - type: Button
+        name: n2
+        content: Visiter
+        url: u2
+        mediaType: m2
+
+slots:
+ some_3:
+    type: text
+ some_4:
+    type: bool
+
+
+intents:
+- intent_3
+- intent_4
+
+entities:
+- entity_3
+- entity_4

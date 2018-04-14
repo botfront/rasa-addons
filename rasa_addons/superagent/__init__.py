@@ -30,7 +30,7 @@ class SuperAgent(Agent):
 
     @classmethod
     def load(cls, path, interpreter=None, tracker_store=None,
-             action_factory=None, allowed_entities_filename=None):
+             action_factory=None, rules_file=None):
         # type: (Text, Any, Optional[TrackerStore]) -> Agent
 
         if path is None:
@@ -43,7 +43,7 @@ class SuperAgent(Agent):
         ensemble = PolicyEnsemble.load(path, featurizer)
         _interpreter = NaturalLanguageInterpreter.create(interpreter)
         _tracker_store = cls.create_tracker_store(tracker_store, domain)
-        return cls(domain, ensemble, featurizer, _interpreter, _tracker_store, allowed_entities_filename)
+        return cls(domain, ensemble, featurizer, _interpreter, _tracker_store, rules_file)
 
     def _create_processor(self, preprocessor=None):
         # type: (Callable[[Text], Text]) -> MessageProcessor
@@ -52,5 +52,5 @@ class SuperAgent(Agent):
         self._ensure_agent_is_prepared()
         self.processor = SuperMessageProcessor(self.interpreter, self.policy_ensemble, self.domain, self.tracker_store,
                                                message_preprocessor=preprocessor,
-                                               allowed_entities_file=self.allowed_entities_filename)
+                                               rules=self.allowed_entities_filename)
         return self.processor
