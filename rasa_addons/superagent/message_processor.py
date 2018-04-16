@@ -3,11 +3,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import os
-
+from rasa_addons.superagent.input_validator import ActionInvalidUtterance
 from rasa_addons.superagent.rules import Rules
-from rasa_core.actions import Action
-from rasa_core.events import UserUttered, ActionExecuted, SlotSet, UserUtteranceReverted, ActionReverted
+from rasa_core.events import UserUttered
 from rasa_core.processor import MessageProcessor
 from rasa_core.dispatcher import Dispatcher
 
@@ -25,11 +23,11 @@ class SuperMessageProcessor(MessageProcessor):
                  max_number_of_predictions=10,  # type: int
                  message_preprocessor=None,  # type: Optional[LambdaType]
                  on_circuit_break=None,  # type: Optional[LambdaType]
-                 rules=None  # type: Optional[str]
+                 rules_file=None  # type: Optional[str]
                  ):
 
-        if rules is not None:
-            self.rules = Rules(rules)
+        if rules_file is not None:
+            self.rules = Rules(rules_file)
         super(SuperMessageProcessor, self).__init__(
             interpreter,
             policy_ensemble,
@@ -49,6 +47,11 @@ class SuperMessageProcessor(MessageProcessor):
             self.rules.substitute_intent(parse_data, tracker)
             self.rules.filter_entities(parse_data)
 
+            error_template = self.rules.input_validation.get_error(parse_data, tracker)
+            if error_template is not None:
+                self._utter_error_and_roll_back(message, tracker, error_template)
+                return
+
         # don't ever directly mutate the tracker
         # - instead pass its events to log
         tracker.update(UserUttered(message.text, parse_data["intent"],
@@ -60,8 +63,11 @@ class SuperMessageProcessor(MessageProcessor):
         logger.debug("Logged UserUtterance - "
                      "tracker now has {} events".format(len(tracker.events)))
 
+    def _utter_error_and_roll_back(self, latest_bot_message, tracker, template):
+        dispatcher = Dispatcher(latest_bot_message.sender_id,
+                                latest_bot_message.output_channel,
+                                self.domain)
 
+        action = ActionInvalidUtterance(template)
 
-
-
-
+        self._run_action(action, tracker, dispatcher)

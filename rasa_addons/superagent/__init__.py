@@ -16,10 +16,10 @@ class SuperAgent(Agent):
             featurizer=None,  # type: Optional[Featurizer]
             interpreter=None,  # type: Optional[NaturalLanguageInterpreter]
             tracker_store=None,  # type: Optional[TrackerStore]
-            allowed_entities_filename=None  # type: Optional[str]
+            rules_file=None  # type: Optional[str]
     ):
         self.processor = None
-        self.allowed_entities_filename = allowed_entities_filename
+        self.rules_file = rules_file
         super(SuperAgent, self).__init__(
             domain,
             policies,
@@ -51,6 +51,5 @@ class SuperAgent(Agent):
 
         self._ensure_agent_is_prepared()
         self.processor = SuperMessageProcessor(self.interpreter, self.policy_ensemble, self.domain, self.tracker_store,
-                                               message_preprocessor=preprocessor,
-                                               rules=self.allowed_entities_filename)
+                                               message_preprocessor=preprocessor, rules_file=self.rules_file)
         return self.processor
