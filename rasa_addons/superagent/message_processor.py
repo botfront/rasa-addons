@@ -26,8 +26,7 @@ class SuperMessageProcessor(MessageProcessor):
                  rules_file=None  # type: Optional[str]
                  ):
 
-        if rules_file is not None:
-            self.rules = Rules(rules_file)
+        self.rules = Rules(rules_file) if rules_file is not None else None
         super(SuperMessageProcessor, self).__init__(
             interpreter,
             policy_ensemble,
@@ -43,7 +42,7 @@ class SuperMessageProcessor(MessageProcessor):
 
         parse_data = self._parse_message(message)
 
-        if self.rules:
+        if self.rules is not None:
             self.rules.substitute_intent(parse_data, tracker)
             self.rules.filter_entities(parse_data)
 
