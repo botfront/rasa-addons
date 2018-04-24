@@ -16,29 +16,61 @@ agent.handle_channel(SocketInputChannel(5500, "/bot", input_channel))
 
 ```
 
-In `static` you could have an `index.html` containing the widget snippet that you could access to `http://localhost:5500/bot` 
- 
- 
- 
-## Entity filtering
+In `static` you could have an `index.html` containing the widget snippet that you could access to `http://localhost:5500/bot`
 
-Sometimes Rasa NLU CRF extractor will return unexpected entities and those can perturbate your Rasa Core dialogue model 
-because it has never seen this particular combination of intent and entity.
+## Rules
 
-This helper lets you define precisely the entities allowed for every intent in a yaml file:
-
-```yaml
-book: # intent
-  - origin # entity
-  - destination
-buy:
-  - color
-  - product
-```
-
-Then load your agent as follows:
+Enforcing some rules on top of the ML can be sometimes be useful. Those rules are defined in a `rules.yml` file that is referenced as follows:
 
 ```python
 from rasa_addons.superagent import SuperAgent
-agent = SuperAgent.load(POLICY_PATH, allowed_entities_filename='allowed_entities.yml')
+agent = SuperAgent.load(...,rules_file='rules.yml')
+```
+
+Rules are enforced at the tracker level, so there is no need to retrain when changing them.
+
+### Input validation
+The following rule will utter the `error_template` if the user does not reply to `utter_when_do_you_want_a_wake_up_call` with either `/cancel` OR `/speak_to_human` OR `/enter_time{"time":"..."}`
+
+```yaml
+input_validation:
+  - after: utter_when_do_you_want_a_wake_up_call
+    expected:
+      - intents:
+        - cancel
+      - intents:
+        - skeak_to_human
+      - intents:
+        - enter_time
+        entities:
+        - time
+    error_template: utter_please_provide_time
+```
+
+
+### Intent substitution:
+Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. The following will substitute any intent caught after `utter_when_do_you_want_a_wake_up_call` with `enter_data` unless...
+
+```yaml
+intent_substitutions:
+  - after: utter_when_do_you_want_a_wake_up_call
+    intent: enter_data
+    unless: frustration|cancel|speak_to_human
+```  
+
+### Entity filtering
+
+Sometimes Rasa NLU CRF extractor will return unexpected entities and those can perturbate your Rasa Core dialogue model
+because it has never seen this particular combination of intent and entity.
+
+This helper lets you define precisely the entities allowed for every intent in a yaml file. Entities not in the list for a given intent will be cleared. It will only remove entities for intents specifically listed in this section:
+
+```yaml
+allowed_entities:
+  book: # intent
+    - origin # entity
+    - destination
+  buy:
+    - color
+    - product
 ```
