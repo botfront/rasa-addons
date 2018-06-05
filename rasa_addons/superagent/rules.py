@@ -14,7 +14,7 @@ class Rules(object):
     def __init__(self, rules_file):
         data = self._load_yaml(rules_file)
         self.actions_to_ignore = ['action_listen', 'action_invalid_utterance']
-        self.allowed_entities = data["allowed_entities"] if "allowed_entities" else {}
+        self.allowed_entities = data["allowed_entities"] if "allowed_entities" in data else {}
         self.intent_substitutions = data["intent_substitutions"] if "intent_substitutions" in data else []
         self.input_validation = InputValidator(data["input_validation"]) if "input_validation" in data else []
 
