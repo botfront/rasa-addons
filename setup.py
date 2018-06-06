@@ -9,5 +9,5 @@ setup(
     licence='Apache 2.0',
     url='http://mrbot.ai',
     author_email='human@mrbot.ai',
-    packages=['rasa_addons', 'rasa_addons.webchat', 'rasa_addons.superagent']
+    packages=['rasa_addons', 'rasa_addons.webchat', 'rasa_addons.superagent', 'rasa_addons.domains']
 )
