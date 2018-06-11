@@ -21,10 +21,10 @@ class Rules(object):
     def filter_entities(self, parse_data):
 
         if parse_data['intent']['name'] in self.allowed_entities.keys():
-            filtered = filter(lambda ent: ent['entity'] in self.allowed_entities[parse_data['intent']['name']],
-                              parse_data['entities'])
+            filtered = list(filter(lambda ent: ent['entity'] in self.allowed_entities[parse_data['intent']['name']],
+                              parse_data['entities']))
         else:
-            filtered = []
+            filtered = parse_data['entities']
 
         if len(filtered) < len(parse_data['entities']):
             # logging first

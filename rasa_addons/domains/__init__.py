@@ -1,7 +1,5 @@
 import glob
-
 from jsonmerge import Merger
-
 import yaml
 import os
 import io

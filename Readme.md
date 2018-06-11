@@ -74,3 +74,34 @@ allowed_entities:
     - color
     - product
 ```
+
+## Custom dispatcher
+
+If you want to get your templates from another source than the domain, you can do it like this:
+
+Create your dispatcher
+```python
+class MyDispatcher(Dispatcher):
+    def retrieve_template(self, template_name, filled_slots=None, **kwargs):
+        """Retrieve a named template from the domain."""
+
+        response = requests.get('api/{template_key}/'.format(...))
+        if response.status_code == 200:
+            r = response.json()
+            if r is not None:
+                return self._fill_template_text(r, filled_slots, **kwargs)
+            
+        else:
+            print("error")
+
+```
+
+Then load your agent
+```python
+agent = SuperAgent.load(POLICY_PATH,
+                        interpreter=interpreter,
+                        create_dispatcher=lambda sender_id, output_channel, domain: MyDispatcher(sender_id, output_channel, domain))
+
+```
+
+

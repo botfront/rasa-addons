@@ -23,6 +23,7 @@ class SuperMessageProcessor(MessageProcessor):
                  max_number_of_predictions=10,  # type: int
                  message_preprocessor=None,  # type: Optional[LambdaType]
                  on_circuit_break=None,  # type: Optional[LambdaType]
+                 create_dispatcher=None,  # type: Optional[LambdaType]
                  rules_file=None  # type: Optional[str]
                  ):
 
@@ -36,6 +37,9 @@ class SuperMessageProcessor(MessageProcessor):
             message_preprocessor,
             on_circuit_break
         )
+        self.create_dispatcher = create_dispatcher
+        if self.create_dispatcher is None:
+            self.create_dispatcher = lambda sender_id, output_channel, dom: Dispatcher(sender_id, output_channel, dom)
 
     def _handle_message_with_tracker(self, message, tracker):
         # type: (UserMessage, DialogueStateTracker) -> None
@@ -70,3 +74,35 @@ class SuperMessageProcessor(MessageProcessor):
         action = ActionInvalidUtterance(template)
 
         self._run_action(action, tracker, dispatcher)
+
+    def _predict_and_execute_next_action(self, message, tracker):
+        # this will actually send the response to the user
+
+        dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.domain)
+        # keep taking actions decided by the policy until it chooses to 'listen'
+        should_predict_another_action = True
+        num_predicted_actions = 0
+
+        self._log_slots(tracker)
+
+        # action loop. predicts actions until we hit action listen
+        while (should_predict_another_action
+               and self._should_handle_message(tracker)
+               and num_predicted_actions < self.max_number_of_predictions):
+            # this actually just calls the policy's method by the same name
+            action = self._get_next_action(tracker)
+
+            should_predict_another_action = self._run_action(action,
+                                                             tracker,
+                                                             dispatcher)
+            num_predicted_actions += 1
+
+        if (num_predicted_actions == self.max_number_of_predictions and
+                should_predict_another_action):
+            # circuit breaker was tripped
+            logger.warn(
+                "Circuit breaker tripped. Stopped predicting "
+                "more actions for sender '{}'".format(tracker.sender_id))
+            if self.on_circuit_break:
+                # call a registered callback
+                self.on_circuit_break(tracker, dispatcher)
