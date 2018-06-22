@@ -1,3 +1,4 @@
 flask
 flask_socketio
 flask_cors
+jsonmerge
