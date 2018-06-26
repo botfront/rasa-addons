@@ -114,7 +114,6 @@ class SocketInputChannel(HttpInputChannel):
         @socketio.on('user_uttered')
         def handle_message(message):
             on_message(UserMessage(message, WebchatBot(), request.sid))
-            print request
 
         cors = CORS(app, resources={r"*": {"origins": "*"}})  # TODO change that
 
