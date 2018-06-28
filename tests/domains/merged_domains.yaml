@@ -13,6 +13,11 @@ entities:
 - entity_2
 - entity_3
 - entity_4
+intents:
+- intent_1
+- intent_2
+- intent_3
+- intent_4
 slots:
  some_1:
     type: text
@@ -22,11 +27,6 @@ slots:
     type: text
  some_4:
     type: bool
-intents:
-- intent_1
-- intent_2
-- intent_3
-- intent_4
 templates:
   utter_1:
   - utter_11

@@ -1,5 +1,7 @@
+import json
+import difflib
 import yaml
-from dm.utils.domains_merger import DomainsMerger
+from rasa_addons.domains import DomainsMerger
 
 def test_merge():
     DomainsMerger('domains', 'test_domain').merge().dump()
@@ -9,4 +11,8 @@ def test_merge():
     with open('domains/aggregated_domains.yaml', 'r') as stream:
         test = yaml.load(stream)
 
-    assert test == source
+    # comparing strings instead
+    source_dump = json.dumps(source, sort_keys=True)
+    test_dump = json.dumps(test, sort_keys=True)
+
+    assert source_dump == test_dump

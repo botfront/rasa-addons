@@ -11,8 +11,8 @@ actions:
 entities:
 - entity_1
 - entity_2
-- entity_4
 - entity_3
+- entity_4
 intents:
 - intent_1
 - intent_2
