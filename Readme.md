@@ -1,6 +1,10 @@
+
+![PyPI](https://img.shields.io/pypi/v/rasa-addons.svg)
+
+
 ## Installation
 ```bash
-pip install git+https://github.com/mrbot-ai/rasa-addons
+pip install rasa-addons
 ```
 
 ## Rasa channel for the [Web chat widget](https://github.com/mrbot-ai/webchat)
