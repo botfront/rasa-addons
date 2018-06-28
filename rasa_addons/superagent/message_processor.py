@@ -50,10 +50,11 @@ class SuperMessageProcessor(MessageProcessor):
             self.rules.substitute_intent(parse_data, tracker)
             self.rules.filter_entities(parse_data)
 
-            error_template = self.rules.input_validation.get_error(parse_data, tracker)
-            if error_template is not None:
-                self._utter_error_and_roll_back(message, tracker, error_template)
-                return
+            if self.rules.input_validation:
+                error_template = self.rules.input_validation.get_error(parse_data, tracker)
+                if error_template is not None:
+                    self._utter_error_and_roll_back(message, tracker, error_template)
+                    return
 
         # don't ever directly mutate the tracker
         # - instead pass its events to log
