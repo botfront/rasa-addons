@@ -3,3 +3,4 @@ flask_socketio
 flask_cors
 pyyaml
 jsonmerge
+rasa_core
