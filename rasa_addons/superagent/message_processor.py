@@ -68,9 +68,8 @@ class SuperMessageProcessor(MessageProcessor):
                      "tracker now has {} events".format(len(tracker.events)))
 
     def _utter_error_and_roll_back(self, latest_bot_message, tracker, template):
-        dispatcher = Dispatcher(latest_bot_message.sender_id,
-                                latest_bot_message.output_channel,
-                                self.domain)
+        dispatcher = self.create_dispatcher(latest_bot_message.sender_id, latest_bot_message.output_channel,
+                                            self.domain)
 
         action = ActionInvalidUtterance(template)
 

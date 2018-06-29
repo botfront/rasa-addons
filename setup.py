@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='rasa_addons',
     description='Rasa Add-ons',
-    version='0.2.1',
+    version='0.2.2',
     author='Nathan Zylbersztejn',
     install_requires=['flask', 'flask_socketio', 'flask_cors', 'jsonmerge'],
     licence='Apache 2.0',
