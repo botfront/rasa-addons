@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 
 class DomainsMerger(object):
-
     def __init__(self, folder_path, prefix='domain', output='aggregated_domains.yaml'):
         self.output = os.path.join(folder_path, output)
         self.schema = {
