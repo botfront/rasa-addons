@@ -1,9 +1,11 @@
 import yaml
 from rasa_addons.superagent.input_validator import InputValidator
 
+VALIDATOR_RULES_YAML = './tests/test_input_validator_rules.yaml'
+
 
 def test_validator_intent_and_entity_ok():
-    validator = InputValidator(InputValidator._load_yaml('test_input_validator_rules.yaml')['input_validation'])
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
     previous = "utter_garantie_type_bien"
     parse_data = {
         'intent': {'name': 'garantie'},
@@ -14,7 +16,7 @@ def test_validator_intent_and_entity_ok():
 
 def test_validator_dummy_valid():
 
-    validator = InputValidator(InputValidator._load_yaml('test_input_validator_rules.yaml')['input_validation'])
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
     previous = "not_in_file"
     parse_data = {
         'intent': {'name': 'affirm'},
@@ -24,7 +26,7 @@ def test_validator_dummy_valid():
 
 
 def test_validator_intent_no_entity():
-    validator = InputValidator(InputValidator._load_yaml('test_input_validator_rules.yaml')['input_validation'])
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
     previous = "utter_garantie_type_bien"
     parse_data = {
         'intent': {'name': 'cancel'},
@@ -34,7 +36,7 @@ def test_validator_intent_no_entity():
 
 
 def test_validator_entity_not_in_expected():
-    validator = InputValidator(InputValidator._load_yaml('test_input_validator_rules.yaml')['input_validation'])
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
 
     previous = "utter_garantie_type_bien"
     parse_data = {
@@ -45,7 +47,7 @@ def test_validator_entity_not_in_expected():
 
 
 def test_validator_regex():
-    validator = InputValidator(InputValidator._load_yaml('test_input_validator_rules.yaml')['input_validation'])
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
 
     previous = "utter_garantie_confirm_particulier"
     parse_data = {
@@ -71,7 +73,7 @@ def test_validator_regex():
 
 
 def test_validator_intent_ok_entity_missing():
-    validator = InputValidator(InputValidator._load_yaml('test_input_validator_rules.yaml')['input_validation'])
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
     previous = "utter_garantie_type_bien"
     parse_data = {
         'intent': {'name': 'garantie'},
