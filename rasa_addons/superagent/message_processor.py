@@ -47,7 +47,7 @@ class SuperMessageProcessor(MessageProcessor):
         parse_data = self._parse_message(message)
 
         if self.rules is not None:
-            self.rules.substitute_intent(parse_data, tracker)
+            self.rules.run_swap_intent_rules(parse_data, tracker)
             self.rules.filter_entities(parse_data)
 
             if self.rules.input_validation:

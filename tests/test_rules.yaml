@@ -17,3 +17,20 @@ input_validation:
         - cancel
     error_template: utter_general_validation_affirm_deny
 
+
+intent_substitution:
+  - after: utter_something
+    intent: intent_something
+    unless: chitchat.good_bye|chitchat.this_is_frustrating|chitchat.i_am_angry|request.handover
+
+  - intent: chitchat.i_am_angry|chitchat.this_is_frustrating
+    with: request.handover
+
+  - intent: chitchat\.(?!i_am_angry|this_is_frustrating)
+    with: chitchat
+    entities:
+      add:
+      - name: intent
+        value: '{intent}'
+
+
