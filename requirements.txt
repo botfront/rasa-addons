@@ -1,4 +1,6 @@
 flask
 flask_socketio
 flask_cors
+pyyaml
 jsonmerge
+rasa_core==0.9.6

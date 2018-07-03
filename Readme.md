@@ -1,5 +1,18 @@
+# Rasa Addons
+
 
 ![PyPI](https://img.shields.io/pypi/v/rasa-addons.svg)
+![Travis](https://img.shields.io/travis/mrbot-ai/rasa-addons.svg)
+
+
+A set of power tools to 🚀🚀🚀 your productivity with Rasa
+
+- Input validation: if you expect Yes or No, just specify it in a YAML file and Rasa Core will just handle that for you
+- Intent Substitution: avoid random intents when users enter data without semantic consistency (names, brands, time,...)
+- Webchat: a channel to use with our open source web chat widget
+- Custom dispatchers: need to store your Rasa Core templates out of domain file? We've got you covered
+
+
 
 
 ## Installation

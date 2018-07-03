@@ -3,7 +3,7 @@ import re
 
 import yaml
 import logging
-
+import copy
 from rasa_core.events import ActionExecuted
 from rasa_addons.superagent.input_validator import InputValidator
 
@@ -22,7 +22,7 @@ class Rules(object):
 
         if parse_data['intent']['name'] in self.allowed_entities.keys():
             filtered = list(filter(lambda ent: ent['entity'] in self.allowed_entities[parse_data['intent']['name']],
-                              parse_data['entities']))
+                                   parse_data['entities']))
         else:
             filtered = parse_data['entities']
 
@@ -31,18 +31,46 @@ class Rules(object):
             logger.warn("entity(ies) were removed from parse stories")
             parse_data['entities'] = filtered
 
-    def substitute_intent(self, parse_data, tracker):
+    def run_swap_intent_rules(self, parse_data, tracker):
         previous_action = self._get_previous_action(tracker)
-        if previous_action is None:
-            return
 
         for rule in self.intent_substitutions:
-            rule['unless'] = rule['unless'] if 'unless' in rule else []
-            if re.match(rule['after'], previous_action):
-                if parse_data['intent']['name'] not in rule['unless']:
-                    logger.warn("intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
-                    parse_data['intent']['name'] = rule['intent']
-                    parse_data.pop('intent_ranking', None)
+            Rules._swap_intent(parse_data, previous_action, rule)
+
+    @staticmethod
+    def _swap_intent(parse_data, previous_action, rule):
+        # for an after rule
+        if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
+            Rules._swap_intent_after(parse_data, rule)
+
+        # for a general substitution
+        elif 'after' not in rule and re.match(rule['intent'], parse_data['intent']['name']):
+            Rules.swap_intent_with(parse_data, rule)
+
+    @staticmethod
+    def _swap_intent_after(parse_data, rule):
+        rule['unless'] = rule['unless'] if 'unless' in rule else []
+        if parse_data['intent']['name'] not in rule['unless']:
+            logger.warn(
+                "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
+            parse_data['intent']['name'] = rule['intent']
+            parse_data.pop('intent_ranking', None)
+
+    @staticmethod
+    def swap_intent_with(parse_data, rule):
+
+        def format(text, parse_data):
+            return text.format(intent=parse_data["intent"]["name"])
+
+        pd_copy = copy.deepcopy(parse_data)
+        parse_data['intent']['name'] = rule['with']
+        parse_data['intent_ranking'] = [{"name": rule['with'], "confidence": 1.0}]
+        if 'entities' in rule and 'add' in rule["entities"]:
+            for entity in rule["entities"]["add"]:
+                if 'entities' not in parse_data:
+                    parse_data['entities'] = []
+                parse_data['entities'].append(
+                    {"entity": format(entity["name"], pd_copy), "value": format(entity["value"], pd_copy)})
 
     def _get_previous_action(self, tracker):
         action_listen_found = False
