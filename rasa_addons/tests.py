@@ -118,20 +118,21 @@ def _run_test_cases(agent, domain, input_channel, stories, distinct):
         run_story_test(agent, domain, input_channel, sender_id, story)
     return True
 
-failure = False
+
+failed = False
 
 
 def run_story_test(agent, domain, input_channel, sender_id, story):
-    global failure
+    global failed
     utils.print_color('\n## ' + story['title'].upper(), utils.bcolors.OKBLUE)
-    failure = False
+    failed = False
     for index, step in enumerate(story['steps']):
-        if failure is True:
-            return
+        if failed is True:
+            return failed
         utterance = step.pop(0)
 
         def on_response(response, recipient_id, proc):
-            global failure
+            global failed
             if len(step) > 0:
                 expected = step.pop(0)
                 if response == expected:
@@ -142,7 +143,7 @@ def run_story_test(agent, domain, input_channel, sender_id, story):
                     # _print_slot_values(proc, recipient_id)
                     _restart_tracker(proc, recipient_id)
 
-                    failure = True
+                    failed = True
 
             else:
                 utils.print_color("  - {} (not in case)".format(response), utils.bcolors.BOLD)
@@ -151,6 +152,8 @@ def run_story_test(agent, domain, input_channel, sender_id, story):
 
         input_channel.on_message(
             UserMessage(utterance, TestOutputChannel(on_response, domain, agent.processor), sender_id))
+
+    return failed
 
 
 def _concatenate_storyfiles(folder_path, prefix='test', output='aggregated_test_cases.md'):
