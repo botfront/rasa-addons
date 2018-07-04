@@ -7,12 +7,11 @@
 
 A set of power tools to 🚀🚀🚀 your productivity with Rasa
 
-- Input validation: if you expect Yes or No, just specify it in a YAML file and Rasa Core will just handle that for you
+- Automated tests
+- Web chat: a channel to use with our open source web chat widget
+- Input validation: if you expect Yes or No, make sure your users anser Yes or No
 - Intent Substitution: avoid random intents when users enter data without semantic consistency (names, brands, time,...)
-- Webchat: a channel to use with our open source web chat widget
 - Custom dispatchers: need to store your Rasa Core templates out of domain file? We've got you covered
-
-
 
 
 ## Installation
@@ -20,9 +19,7 @@ A set of power tools to 🚀🚀🚀 your productivity with Rasa
 pip install rasa-addons
 ```
 
-## Rasa channel for the [Web chat widget](https://github.com/mrbot-ai/webchat)
-
-### Usage
+## [Web chat](https://github.com/mrbot-ai/webchat) channel
 
 ```python
 from rasa_addons.webchat import WebChatInput, SocketInputChannel
@@ -35,19 +32,16 @@ agent.handle_channel(SocketInputChannel(5500, "/bot", input_channel))
 
 In `static` you could have an `index.html` containing the widget snippet that you could access to `http://localhost:5500/bot`
 
-## Rules
 
-Enforcing some rules on top of the ML can be sometimes be useful. Those rules are defined in a `rules.yml` file that is referenced as follows:
+## Validate user input
+
+Use the `SuperAgent` instead of the native `Agent` and specify a rules file.
 
 ```python
 from rasa_addons.superagent import SuperAgent
 agent = SuperAgent.load(...,rules_file='rules.yml')
 ```
-
-Rules are enforced at the tracker level, so there is no need to retrain when changing them.
-
-### Input validation
-The following rule will utter the `error_template` if the user does not reply to `utter_when_do_you_want_a_wake_up_call` with either `/cancel` OR `/speak_to_human` OR `/enter_time{"time":"..."}`
+In `rules.yml` you can add input validation rules
 
 ```yaml
 input_validation:
@@ -63,10 +57,12 @@ input_validation:
         - time
     error_template: utter_please_provide_time
 ```
+The following rule will utter the `error_template` if the user does not reply to `utter_when_do_you_want_a_wake_up_call` with either `/cancel` OR `/speak_to_human` OR `/enter_time{"time":"..."}`
+Rules are enforced at the tracker level, so there is no need to retrain when changing them.
 
-
-### Intent substitution:
-Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. The following will substitute any intent caught after `utter_when_do_you_want_a_wake_up_call` with `enter_data` unless...
+### Swap intents:
+Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. 
+The following rule swaps any intent caught after `utter_when_do_you_want_a_wake_up_call` with `enter_data` unless...
 
 ```yaml
 intent_substitutions:
@@ -75,7 +71,7 @@ intent_substitutions:
     unless: frustration|cancel|speak_to_human
 ```  
 
-### Entity filtering
+### Filter entities
 
 Sometimes Rasa NLU CRF extractor will return unexpected entities and those can perturbate your Rasa Core dialogue model
 because it has never seen this particular combination of intent and entity.
@@ -92,7 +88,7 @@ allowed_entities:
     - product
 ```
 
-## Custom dispatcher
+## Get templates out of domain files
 
 If you want to get your templates from another source than the domain, you can do it like this:
 
@@ -121,4 +117,30 @@ agent = SuperAgent.load(POLICY_PATH,
 
 ```
 
+## Run automated tests (experimental)
+You can write test cases as you would write stories, except you should only have `utter_...` actions. 
+
+```markdown
+## chitchat.greet
+* chitchat.greet
+  - utter_reply_to_greet
+
+## chitchat.how_are_you
+* chitchat.how_are_you
+  - utter_reply_to_how_are_you
+
+## chitchat.are_you_a_robot
+* chitchat.are_you_a_robot
+  - utter_reply_to_are_you_a_robot
+
+```
+
+Then you can run your tests with:
+```bash
+python -m rasa_addons.runner -d domains.yml -m models/dialogue/ -t test_cases/ -r rules.yml
+```
+
+You can put your test cases in different files starting with `test` (e.g. `test_chitchat.md`)in a directory.  
+At this time, it only runs the test and outputs dialogues in the console (errors in red). There is no report (Help wanted).
+You can also use `--distinct` to change the `sender_id` at every test case and `--shuffle` to shuffle test cases before running the tests.
 
