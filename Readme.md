@@ -60,7 +60,7 @@ input_validation:
 The following rule will utter the `error_template` if the user does not reply to `utter_when_do_you_want_a_wake_up_call` with either `/cancel` OR `/speak_to_human` OR `/enter_time{"time":"..."}`
 Rules are enforced at the tracker level, so there is no need to retrain when changing them.
 
-### Swap intents:
+## Swap intents
 Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. 
 The following rule swaps any intent caught after `utter_when_do_you_want_a_wake_up_call` with `enter_data` unless...
 
@@ -71,7 +71,7 @@ intent_substitutions:
     unless: frustration|cancel|speak_to_human
 ```  
 
-### Filter entities
+## Filter entities
 
 Sometimes Rasa NLU CRF extractor will return unexpected entities and those can perturbate your Rasa Core dialogue model
 because it has never seen this particular combination of intent and entity.
