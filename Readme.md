@@ -137,7 +137,7 @@ You can write test cases as you would write stories, except you should only have
 
 Then you can run your tests with:
 ```bash
-python -m rasa_addons.runner -d domains.yml -m models/dialogue/ -t test_cases/ -r rules.yml
+python -m rasa_addons.tests -d domains.yml -m models/dialogue/ -t test_cases/ -r rules.yml
 ```
 
 You can put your test cases in different files starting with `test` (e.g. `test_chitchat.md`)in a directory.  
