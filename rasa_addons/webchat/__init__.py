@@ -23,8 +23,13 @@ class WebchatBot(OutputChannel):
     def send_image_url(self, recipient_id, image_url):
         # type: (Text, Text) -> None
         """Sends an image. Default will just post the url as a string."""
-
-        # self.send(recipient_id, attachments.Image(url=image_url))
+        message = {"attachment": {
+            "type": "image",
+            "payload": {
+                # "title": "generic", commented because it's supported, but standard rasa dispatcher only sends the url for now
+                "src": image_url
+            }}}
+        emit('bot_uttered', message, room=recipient_id)
 
     def send_text_with_buttons(self, recipient_id, text, buttons, **kwargs):
         # type: (Text, Text, List[Dict[Text, Any]], **Any) -> None
