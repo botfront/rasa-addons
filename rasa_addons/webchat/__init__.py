@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 class WebchatBot(OutputChannel):
 
+    def __init__(self):
+        self.custom_data = {}
+
     def send(self, recipient_id, message):
         # type: (Text, Any) -> None
         """Sends a message to the recipient."""
@@ -118,7 +121,9 @@ class SocketInputChannel(HttpInputChannel):
 
         @socketio.on('user_uttered')
         def handle_message(message):
-            on_message(UserMessage(message, WebchatBot(), request.sid))
+            output_channel = WebchatBot()
+            output_channel.custom_data = message['customData']
+            on_message(UserMessage(message['message'], output_channel, request.sid))
 
         cors = CORS(app, resources={r"*": {"origins": "*"}})  # TODO change that
 
