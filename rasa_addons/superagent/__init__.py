@@ -66,5 +66,6 @@ class SuperAgent(Agent):
                                                self.tracker_store,
                                                create_dispatcher=self.create_dispatcher,
                                                message_preprocessor=preprocessor,
+                                               generator=self.nlg,
                                                rules_file=self.rules_file)
         return self.processor

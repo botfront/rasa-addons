@@ -20,6 +20,7 @@ class SuperMessageProcessor(MessageProcessor):
                  policy_ensemble,  # type: PolicyEnsemble
                  domain,  # type: Domain
                  tracker_store,  # type: TrackerStore
+                 generator,  # type: NaturalLanguageGenerator
                  max_number_of_predictions=10,  # type: int
                  message_preprocessor=None,  # type: Optional[LambdaType]
                  on_circuit_break=None,  # type: Optional[LambdaType]
@@ -33,13 +34,14 @@ class SuperMessageProcessor(MessageProcessor):
             policy_ensemble,
             domain,
             tracker_store,
+            generator,
             max_number_of_predictions,
             message_preprocessor,
             on_circuit_break
         )
         self.create_dispatcher = create_dispatcher
         if self.create_dispatcher is None:
-            self.create_dispatcher = lambda sender_id, output_channel, dom: Dispatcher(sender_id, output_channel, dom)
+            self.create_dispatcher = lambda sender_id, output_channel, nlg: Dispatcher(sender_id, output_channel, nlg)
 
     def _handle_message_with_tracker(self, message, tracker):
         # type: (UserMessage, DialogueStateTracker) -> None
@@ -69,7 +71,7 @@ class SuperMessageProcessor(MessageProcessor):
 
     def _utter_error_and_roll_back(self, latest_bot_message, tracker, template):
         dispatcher = self.create_dispatcher(latest_bot_message.sender_id, latest_bot_message.output_channel,
-                                            self.domain)
+                                            self.nlg)
 
         action = ActionInvalidUtterance(template)
 
@@ -78,7 +80,7 @@ class SuperMessageProcessor(MessageProcessor):
     def _predict_and_execute_next_action(self, message, tracker):
         # this will actually send the response to the user
 
-        dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.domain)
+        dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.nlg)
         # keep taking actions decided by the policy until it chooses to 'listen'
         should_predict_another_action = True
         num_predicted_actions = 0
