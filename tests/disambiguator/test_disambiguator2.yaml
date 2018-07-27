@@ -1,0 +1,12 @@
+disambiguation_policy:
+  nlu:
+    trigger: $0 < 2 * $1
+    display:
+      type: text_with_buttons
+      intro_template: utter_disamb_intro
+      text_template: utter_disamb_text
+      button_title_template_prefix: utter_disamb
+      fallback_title: utter_fallback
+      fallback_payload: /fallback
+      max_suggestions: 2
+

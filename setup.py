@@ -3,9 +3,9 @@ from setuptools import setup
 setup(
     name='rasa_addons',
     description='Rasa Add-ons',
-    version='0.2.6',
+    version='0.3.0',
     author='Nathan Zylbersztejn',
-    install_requires=['flask', 'flask_socketio', 'flask_cors', 'jsonmerge', 'pyyaml'],
+    install_requires=['flask', 'flask_socketio', 'flask_cors', 'jsonmerge', 'pyyaml', 'schema'],
     licence='Apache 2.0',
     url='http://mrbot.ai',
     author_email='human@mrbot.ai',

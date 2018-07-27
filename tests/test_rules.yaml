@@ -32,5 +32,3 @@ intent_substitution:
       add:
       - name: intent
         value: '{intent}'
-
-
