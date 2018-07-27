@@ -29,6 +29,9 @@ class Disambiguator(object):
             self.rule["display"]["button_title_template_prefix"] = "utter_disamb"
 
     def should_disambiguate(self, parse_data):
+        if "intent_ranking" not in parse_data:
+            return False
+        
         pattern = re.compile(r"\$(\d)")
         eval_string = self.rule["trigger"]
         matches = re.findall(pattern, self.rule["trigger"])

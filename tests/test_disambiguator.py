@@ -115,3 +115,12 @@ def test_with_entities():
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.rule,
                                                          disambiguator.get_payloads(parse_data),
                                                          disambiguator.get_intent_names(parse_data)) == expected
+
+def test_does_not_disambiguate_when_data_is_missing_in_parse_data():
+    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
+
+    parse_data = {
+
+    }
+    assert disambiguator.should_disambiguate(parse_data) is False
+
