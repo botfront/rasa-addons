@@ -5,6 +5,8 @@ import yaml
 import logging
 import copy
 from rasa_core.events import ActionExecuted
+
+from rasa_addons.superagent.dismabiguator import Disambiguator
 from rasa_addons.superagent.input_validator import InputValidator
 
 logger = logging.getLogger(__name__)
@@ -17,6 +19,7 @@ class Rules(object):
         self.allowed_entities = data["allowed_entities"] if "allowed_entities" in data else {}
         self.intent_substitutions = data["intent_substitutions"] if "intent_substitutions" in data else []
         self.input_validation = InputValidator(data["input_validation"]) if "input_validation" in data else []
+        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if "disambiguation_policy" in data else []
 
     def filter_entities(self, parse_data):
 

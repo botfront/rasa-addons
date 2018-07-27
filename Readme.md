@@ -60,6 +60,37 @@ input_validation:
 The following rule will utter the `error_template` if the user does not reply to `utter_when_do_you_want_a_wake_up_call` with either `/cancel` OR `/speak_to_human` OR `/enter_time{"time":"..."}`
 Rules are enforced at the tracker level, so there is no need to retrain when changing them.
 
+## Disambiguate user input and fallback
+
+Help your users when your NLU struggles to identify the right intent. Instead of just going with the highest scoring intent
+you can ask the user to pick from a list of likely intents. 
+
+In the example below, the disambiguation is triggered when the score of the highest scoring intent is below twice the score of the second highest scoring intent.
+
+The bot will utter:  
+1. An intro message (if the optional field `intro_template` is present)  
+2. A text with buttons (or quick replies) message where:  
+ - the text is the template defined as `text_template`, 
+ - the button titles will be the concatenation of "utter_disamb" and the intent name. For example, `utter_disamb_greet`."   
+ - the buttons payloads will be the corresponding intents (e.g. `/greet`). Entities found in `parse_data` are passed on.
+ 
+```yaml
+disambiguation_policy:
+  nlu:
+    trigger: $0 < 2 * $1
+    display:
+      type: text_with_buttons
+      intro_template: utter_disamb_intro
+      text_template: utter_disamb_text
+      button_title_template_prefix: utter_disamb
+      fallback_title: utter_fallback
+      fallback_payload: /fallback
+      max_suggestions: 2
+```
+Note about the trigger. `$0` corresponds to `parse_data['intent_ranking][0]["confidence"]`. You can set any rule based on intent ranking
+
+
+
 ## Swap intents
 Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. 
 The following rule swaps any intent caught after `utter_when_do_you_want_a_wake_up_call` with `enter_data` unless...

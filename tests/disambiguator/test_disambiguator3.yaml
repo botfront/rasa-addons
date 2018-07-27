@@ -1,0 +1,3 @@
+disambiguation_policy:
+  nlu:
+    trigger: $0 < 2 * $1
