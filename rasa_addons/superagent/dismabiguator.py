@@ -31,7 +31,7 @@ class Disambiguator(object):
     def should_disambiguate(self, parse_data):
         if "intent_ranking" not in parse_data:
             return False
-        
+
         pattern = re.compile(r"\$(\d)")
         eval_string = self.rule["trigger"]
         matches = re.findall(pattern, self.rule["trigger"])
@@ -45,7 +45,7 @@ class Disambiguator(object):
         intents = list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.rule["display"]["max_suggestions"]]
         entities = ""
         if "entities" in parse_data and keep_entities:
-            entities = json.dumps(dict(map(lambda e: (e["entity"], e["value"]), parse_data["entities"])), encoding="utf-8")
+            entities = json.dumps(dict(map(lambda e: (e["entity"], e["value"]), parse_data["entities"])))
         payloads = list(["/{}{}".format(i, entities) for i in intents])
         return payloads
 
