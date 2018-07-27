@@ -1,3 +1,4 @@
+import json
 import re
 from schema import Schema, And, Optional
 from rasa_core.actions.action import Action
@@ -35,29 +36,41 @@ class Disambiguator(object):
         for i in matches:
             eval_string = re.sub(r'\$' + i, str(parse_data["intent_ranking"][int(i)]["confidence"]), eval_string)
             intents.append(parse_data["intent_ranking"][int(i)]["name"])
+        return eval(eval_string)
+
+    def get_payloads(self, parse_data, keep_entities=True):
         intents = list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.rule["display"]["max_suggestions"]]
-        return eval(eval_string), intents
+        entities = ""
+        if "entities" in parse_data and keep_entities:
+            entities = json.dumps(dict(map(lambda e: (e["entity"], e["value"]), parse_data["entities"])), encoding="utf-8")
+        payloads = list(["/{}{}".format(i, entities) for i in intents])
+        return payloads
+
+    def get_intent_names(self, parse_data):
+        return list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.rule["display"]["max_suggestions"]]
 
     def disambiguate(self, parse_data, tracker, dispatcher, run_action):
-        should_disambiguate, intents = self.should_disambiguate(parse_data)
+        should_disambiguate = self.should_disambiguate(parse_data)
+
         if should_disambiguate:
-            action = ActionDisambiguate(self.rule, intents)
+            action = ActionDisambiguate(self.rule, self.get_payloads(parse_data))
             run_action(action, tracker, dispatcher)
             return True
 
 
 class ActionDisambiguate(Action):
 
-    def __init__(self, rule, intents):
+    def __init__(self, rule, payloads, intents):
         self.rule = rule
+        self.payloads = payloads
         self.intents = intents
 
     @staticmethod
-    def get_disambiguation_message(dispatcher, rule, intents):
+    def get_disambiguation_message(dispatcher, rule, payloads, intents):
         buttons = list(
             [{"title": dispatcher.retrieve_template(
-                "{}_{}".format(rule["display"]["button_title_template_prefix"], i))[
-                "text"], "payload": "/{}".format(i)} for i in intents])
+                "{}_{}".format(rule["display"]["button_title_template_prefix"], i[0]))[
+                "text"], "payload": i[1]} for i in zip(intents, payloads)])
 
         if "fallback_title" in rule["display"] and "fallback_payload" in rule["display"]:
             buttons.append(
@@ -67,7 +80,8 @@ class ActionDisambiguate(Action):
 
         disambiguation_message = {
             "text": dispatcher.retrieve_template(rule["display"]["text_template"])["text"],
-            "buttons": buttons}
+            "buttons": buttons
+        }
 
         return disambiguation_message
 
@@ -75,7 +89,7 @@ class ActionDisambiguate(Action):
         if "intro_template" in self.rule["display"]:
             dispatcher.utter_template(self.rule["display"]["intro_template"])
 
-        disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.intents)
+        disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads)
 
         dispatcher.utter_response(disambiguation_message)
         return [Restarted()]
