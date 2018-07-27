@@ -10,3 +10,10 @@ install:
 
 script:
   - python -m pytest
+
+deploy:
+  provider: pypi
+  user: $pypi_username
+  password: $pypi_pw
+  on:
+    tags: true
