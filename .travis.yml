@@ -15,5 +15,7 @@ deploy:
   provider: pypi
   user: $pypi_username
   password: $pypi_pw
+  distributions: sdist
   on:
     tags: true
+    python: 3.5
