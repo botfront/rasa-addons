@@ -97,20 +97,19 @@ def test_with_entities():
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}],
-        "entities": [{"entity": "entity1", "value": "value1"}, {"entity": "entity2", "value": "value2"}]
+        "entities": [{"entity": "entity1", "value": "value1"}]
     }
 
     expected = {
         "text": "utter_disamb_text",
         "buttons": [{
             "title": "utter_disamb_intentA",
-            "payload": "/intentA{\"entity1\": \"value1\", \"entity2\": \"value2\"}"
+            "payload": "/intentA{\"entity1\": \"value1\"}"
         }, {
             "title": "utter_disamb_intentB",
-            "payload": "/intentB{\"entity1\": \"value1\", \"entity2\": \"value2\"}"
+            "payload": "/intentB{\"entity1\": \"value1\"}"
         }]
     }
-
     dispatcher = TestDispatcher()
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.rule,
                                                          disambiguator.get_payloads(parse_data),
