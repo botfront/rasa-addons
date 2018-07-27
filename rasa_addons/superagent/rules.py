@@ -35,6 +35,10 @@ class Rules(object):
             parse_data['entities'] = filtered
 
     def run_swap_intent_rules(self, parse_data, tracker):
+        # don't do anything if no intent is present
+        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+            return
+
         previous_action = self._get_previous_action(tracker)
 
         for rule in self.intent_substitutions:
@@ -42,6 +46,10 @@ class Rules(object):
 
     @staticmethod
     def _swap_intent(parse_data, previous_action, rule):
+        # don't do anything if no intent is present
+        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+            return
+
         # for an after rule
         if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
             Rules._swap_intent_after(parse_data, rule)
