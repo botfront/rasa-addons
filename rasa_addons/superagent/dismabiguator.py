@@ -36,7 +36,7 @@ class Disambiguator(object):
         for i in matches:
             eval_string = re.sub(r'\$' + i, str(parse_data["intent_ranking"][int(i)]["confidence"]), eval_string)
             intents.append(parse_data["intent_ranking"][int(i)]["name"])
-        return eval(eval_string)
+        return eval(eval_string, {'__builtins__': {}})
 
     def get_payloads(self, parse_data, keep_entities=True):
         intents = list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.rule["display"]["max_suggestions"]]
