@@ -35,11 +35,13 @@ class Disambiguator(object):
         pattern = re.compile(r"\$(\d)")
         eval_string = self.rule["trigger"]
         matches = re.findall(pattern, self.rule["trigger"])
-        intents = []
         for i in matches:
+            # if not enough intents in ranking to apply the rule, no disambiguation can be done
+            if int(i) >= len(parse_data["intent_ranking"]):
+                return False
             eval_string = re.sub(r'\$' + i, str(parse_data["intent_ranking"][int(i)]["confidence"]), eval_string)
-            intents.append(parse_data["intent_ranking"][int(i)]["name"])
-        return eval(eval_string, {'__builtins__': {}})
+
+        return len(parse_data["intent_ranking"]) and eval(eval_string, {'__builtins__': {}})
 
     def get_payloads(self, parse_data, keep_entities=True):
         intents = list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.rule["display"]["max_suggestions"]]
@@ -56,7 +58,7 @@ class Disambiguator(object):
         should_disambiguate = self.should_disambiguate(parse_data)
 
         if should_disambiguate:
-            action = ActionDisambiguate(self.rule, self.get_payloads(parse_data))
+            action = ActionDisambiguate(self.rule, self.get_payloads(parse_data), self.get_intent_names(parse_data))
             run_action(action, tracker, dispatcher)
             return True
 
@@ -92,7 +94,7 @@ class ActionDisambiguate(Action):
         if "intro_template" in self.rule["display"]:
             dispatcher.utter_template(self.rule["display"]["intro_template"])
 
-        disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads)
+        disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads, self.intents)
 
         dispatcher.utter_response(disambiguation_message)
         return [Restarted()]
