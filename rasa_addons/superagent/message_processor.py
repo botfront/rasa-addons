@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from rasa_addons.superagent.dismabiguator import ActionDisambiguate
-from rasa_addons.superagent.input_validator import ActionInvalidUtterance
 from rasa_addons.superagent.rules import Rules
 from rasa_core.events import UserUttered
 from rasa_core.processor import MessageProcessor
@@ -64,25 +63,9 @@ class SuperMessageProcessor(MessageProcessor):
                      "tracker now has {} events".format(len(tracker.events)))
 
     def _rule_interrupts(self, parse_data, tracker, message):
-        dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.domain)
         if self.rules is not None:
-            if self.rules.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, self._run_action):
-                return True
-
-            self.rules.run_swap_intent_rules(parse_data, tracker)
-            self.rules.filter_entities(parse_data)
-
-            if self.rules.input_validation:
-                error_template = self.rules.input_validation.get_error(parse_data, tracker)
-                if error_template is not None:
-                    self._utter_error_and_roll_back(message, tracker, error_template)
-                    return True
-
-    def _utter_error_and_roll_back(self, latest_bot_message, tracker, template):
-        dispatcher = self.create_dispatcher(latest_bot_message.sender_id, latest_bot_message.output_channel,
-                                            self.domain)
-        action = ActionInvalidUtterance(template)
-        self._run_action(action, tracker, dispatcher)
+            dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.domain)
+            return self.rules.interrupts(dispatcher, parse_data, tracker, self._run_action)
 
     def _predict_and_execute_next_action(self, message, tracker):
         # this will actually send the response to the user

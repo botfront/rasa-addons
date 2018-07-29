@@ -9,6 +9,7 @@ from rasa_core.events import ActionExecuted
 from rasa_addons.superagent.dismabiguator import Disambiguator
 from rasa_addons.superagent.input_validator import InputValidator
 
+from rasa_addons.superagent.input_validator import ActionInvalidUtterance
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +21,26 @@ class Rules(object):
         self.intent_substitutions = data["intent_substitutions"] if "intent_substitutions" in data else []
         self.input_validation = InputValidator(data["input_validation"]) if "input_validation" in data else []
         self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if "disambiguation_policy" in data else []
+
+    def interrupts(self, dispatcher, parse_data, tracker, run_action):
+
+        self.run_swap_intent_rules(parse_data, tracker)
+
+        if self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
+            return True
+
+        self.filter_entities(parse_data)
+
+        if self.input_validation:
+            error_template = self.input_validation.get_error(parse_data, tracker)
+            if error_template is not None:
+                self._utter_error_and_roll_back(dispatcher, tracker, error_template)
+                return True
+
+    @staticmethod
+    def _utter_error_and_roll_back(dispatcher, tracker, template, run_action):
+        action = ActionInvalidUtterance(template)
+        run_action(action, tracker, dispatcher)
 
     def filter_entities(self, parse_data):
 
