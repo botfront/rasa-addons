@@ -82,6 +82,39 @@ def test_validator_intent_ok_entity_missing():
     }
     assert validator._get_error(parse_data, previous) == 'utter_general_validation_options'
 
+def test_validator_intent_empty():
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
+    previous = "utter_garantie_type_bien"
+    parse_data = {
+        'intent': {'name': ''},
+        'entities': []
+    }
+    assert validator._get_error(parse_data, previous) == 'utter_general_validation_options'
+
+def test_validator_intent_none():
+    validator = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['input_validation'])
+    previous = "utter_garantie_type_bien"
+    parse_data = {
+        'intent': {'name': None},
+        'entities': []
+    }
+    assert validator._get_error(parse_data, previous) == 'utter_general_validation_options'
+
+def test_swap_intent_none():
+    swap_rules = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['intent_substitution'])
+    # make sure intent swapped
+    parse_data = {"intent": {"name": None, "confidence": 0.0}}
+    Rules._swap_intent(parse_data,  "utter_something", swap_rules.rules[0])
+    assert parse_data["intent"]["name"] is None
+
+
+def test_swap_intent_empty():
+    swap_rules = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['intent_substitution'])
+    # make sure intent swapped
+    parse_data = {"intent": {"name": "", "confidence": 0.0}}
+    Rules._swap_intent(parse_data,  "utter_something", swap_rules.rules[0])
+    assert parse_data["intent"]["name"] == ""
+
 
 def test_swap_intent_after1():
     swap_rules = InputValidator(InputValidator._load_yaml(VALIDATOR_RULES_YAML)['intent_substitution'])

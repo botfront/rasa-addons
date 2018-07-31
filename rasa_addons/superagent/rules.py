@@ -5,8 +5,11 @@ import yaml
 import logging
 import copy
 from rasa_core.events import ActionExecuted
+
+from rasa_addons.superagent.dismabiguator import Disambiguator
 from rasa_addons.superagent.input_validator import InputValidator
 
+from rasa_addons.superagent.input_validator import ActionInvalidUtterance
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +20,27 @@ class Rules(object):
         self.allowed_entities = data["allowed_entities"] if "allowed_entities" in data else {}
         self.intent_substitutions = data["intent_substitutions"] if "intent_substitutions" in data else []
         self.input_validation = InputValidator(data["input_validation"]) if "input_validation" in data else []
+        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if "disambiguation_policy" in data else []
+
+    def interrupts(self, dispatcher, parse_data, tracker, run_action):
+
+        self.run_swap_intent_rules(parse_data, tracker)
+
+        if self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
+            return True
+
+        self.filter_entities(parse_data)
+
+        if self.input_validation:
+            error_template = self.input_validation.get_error(parse_data, tracker)
+            if error_template is not None:
+                self._utter_error_and_roll_back(dispatcher, tracker, error_template, run_action)
+                return True
+
+    @staticmethod
+    def _utter_error_and_roll_back(dispatcher, tracker, template, run_action):
+        action = ActionInvalidUtterance(template)
+        run_action(action, tracker, dispatcher)
 
     def filter_entities(self, parse_data):
 
@@ -32,6 +56,10 @@ class Rules(object):
             parse_data['entities'] = filtered
 
     def run_swap_intent_rules(self, parse_data, tracker):
+        # don't do anything if no intent is present
+        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+            return
+
         previous_action = self._get_previous_action(tracker)
 
         for rule in self.intent_substitutions:
@@ -39,6 +67,10 @@ class Rules(object):
 
     @staticmethod
     def _swap_intent(parse_data, previous_action, rule):
+        # don't do anything if no intent is present
+        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+            return
+
         # for an after rule
         if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
             Rules._swap_intent_after(parse_data, rule)
