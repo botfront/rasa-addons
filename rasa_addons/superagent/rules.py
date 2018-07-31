@@ -34,7 +34,7 @@ class Rules(object):
         if self.input_validation:
             error_template = self.input_validation.get_error(parse_data, tracker)
             if error_template is not None:
-                self._utter_error_and_roll_back(dispatcher, tracker, error_template)
+                self._utter_error_and_roll_back(dispatcher, tracker, error_template, run_action)
                 return True
 
     @staticmethod
