@@ -63,7 +63,8 @@ class Rules(object):
         previous_action = self._get_previous_action(tracker)
 
         for rule in self.intent_substitutions:
-            Rules._swap_intent(parse_data, previous_action, rule)
+            if Rules._swap_intent(parse_data, previous_action, rule):
+                break
 
     @staticmethod
     def _swap_intent(parse_data, previous_action, rule):
@@ -73,11 +74,11 @@ class Rules(object):
 
         # for an after rule
         if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
-            Rules._swap_intent_after(parse_data, rule)
+            return Rules._swap_intent_after(parse_data, rule)
 
         # for a general substitution
         elif 'after' not in rule and re.match(rule['intent'], parse_data['intent']['name']):
-            Rules.swap_intent_with(parse_data, rule)
+            return Rules.swap_intent_with(parse_data, rule)
 
     @staticmethod
     def _swap_intent_after(parse_data, rule):
@@ -87,6 +88,7 @@ class Rules(object):
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
             parse_data.pop('intent_ranking', None)
+            return True
 
     @staticmethod
     def swap_intent_with(parse_data, rule):
@@ -103,6 +105,7 @@ class Rules(object):
                     parse_data['entities'] = []
                 parse_data['entities'].append(
                     {"entity": format(entity["name"], pd_copy), "value": format(entity["value"], pd_copy)})
+        return True
 
     def _get_previous_action(self, tracker):
         action_listen_found = False
