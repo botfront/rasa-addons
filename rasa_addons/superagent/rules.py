@@ -17,10 +17,10 @@ class Rules(object):
     def __init__(self, rules_file):
         data = self._load_yaml(rules_file)
         self.actions_to_ignore = ['action_listen', 'action_invalid_utterance']
-        self.allowed_entities = data["allowed_entities"] if "allowed_entities" in data else {}
-        self.intent_substitutions = data["intent_substitutions"] if "intent_substitutions" in data else []
-        self.input_validation = InputValidator(data["input_validation"]) if "input_validation" in data else []
-        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if "disambiguation_policy" in data else []
+        self.allowed_entities = data["allowed_entities"] if data and "allowed_entities" in data else {}
+        self.intent_substitutions = data["intent_substitutions"] if data and "intent_substitutions" in data else []
+        self.input_validation = InputValidator(data["input_validation"]) if data and "input_validation" in data else []
+        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if data and "disambiguation_policy" in data else []
 
     def interrupts(self, dispatcher, parse_data, tracker, run_action):
 
