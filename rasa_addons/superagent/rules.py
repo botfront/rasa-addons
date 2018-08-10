@@ -26,7 +26,9 @@ class Rules(object):
 
         self.run_swap_intent_rules(parse_data, tracker)
 
-        if self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
+        # fallback has precedence
+        if self.disambiguation_policy.fallback(parse_data, tracker, dispatcher, run_action) or \
+        self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
             return True
 
         self.filter_entities(parse_data)

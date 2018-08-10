@@ -1,0 +1,11 @@
+disambiguation_policy:
+  nlu:
+    fallback:
+      trigger: $0 < 0.5
+      display:
+        text: utter_fallback_intro
+        buttons:
+          - title: utter_fallback_yes
+            payload: /fallback
+          - title: utter_fallback_no
+            payload: /restart

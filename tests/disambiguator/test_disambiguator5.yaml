@@ -1,0 +1,4 @@
+disambiguation_policy:
+  nlu:
+    fallback:
+      trigger: $0 < 0.25
