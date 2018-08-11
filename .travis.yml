@@ -6,12 +6,16 @@ python:
 - '3.6'
 install:
 - pip install -r requirements.txt
+- pip install pytest-cov
+
 #script:
 #- python -m pytest
 script:
 - py.test tests --cov=codecov
 after_success:
   - codecov
+all_branches: true
+
 deploy:
   provider: pypi
   distributions: sdist
