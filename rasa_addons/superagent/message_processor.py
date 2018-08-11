@@ -66,7 +66,7 @@ class SuperMessageProcessor(MessageProcessor):
 
     def _rule_interrupts(self, parse_data, tracker, message):
         if self.rules is not None:
-            dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.domain)
+            dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.nlg)
             return self.rules.interrupts(dispatcher, parse_data, tracker, self._run_action)
 
     def _predict_and_execute_next_action(self, message, tracker):
