@@ -1,21 +1,19 @@
 language: python
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
 install:
-  - pip install -r requirements.txt
-
+- pip install -r requirements.txt
 script:
-  - python -m pytest
-
+- python -m pytest
 deploy:
   provider: pypi
-  user: $pypi_username
-  password: $pypi_pw
   distributions: sdist
+  user: mrbot
+  password:
+    secure: 2Ti14Ow0tpBbs/aqyocfHVs7zzTxM05mITwmBVcJWaoqLMu1DVO4r3oFMKzSSZaR9u6G8S2/kro6wvrtdUt6qQ3roBD4T+beimwX6hHcKuVXFASp96KrXT2jrVWaKCTlS+pWOodcR2VZQAX9/pn5OZuNw1iwuEIMEnRoFpuZktnfjmxFtYMT1O2fHdkisVQD0MvgYlf45BXP4axDzLgjD3pp/kQNkfyHCNQPciC/iDhZcQHcN9DeQBStEoijKQdOUTEg8TWTZfU1+Ia7XIjuNp/Kw7QHK1N4uylhtLVPcOBWfnJRugnyy62g2XvpybdTia40rye9EyWpZqZtBbFDpSsvssuxsVh/AWc0+zGYErYidBFlOE6Xj482iYqR8fCK19r0kxQMEqJWNYeeQBEHEEVWafQLZbjioGlNw58xDG2YgdHVGK4ky8BR6nfdTPqArVNlT6uQYJc2o6o+oZlTx7jFCuczCRpt6kHhd1w0XCbfoLVP3scMDy8eK/SGpvKmmWKfTBsyhx1DfTDgLFaHceH1earccXzbMslrA/2xzpOxY7iuNPObJBGYF/2dgKi5KkvBMIGw5vKG43SrnHQx2T3m12eJBDvWRK5908Zki/13FqaPVzdTieqHPnW+Ob2NUqDEqE3CDfgj2gcLbGkpp3AtfW+055E6qwMO2V45pp8=
   on:
     tags: true
     python: 3.5

@@ -17,10 +17,10 @@ class Rules(object):
     def __init__(self, rules_file):
         data = self._load_yaml(rules_file)
         self.actions_to_ignore = ['action_listen', 'action_invalid_utterance']
-        self.allowed_entities = data["allowed_entities"] if "allowed_entities" in data else {}
-        self.intent_substitutions = data["intent_substitutions"] if "intent_substitutions" in data else []
-        self.input_validation = InputValidator(data["input_validation"]) if "input_validation" in data else []
-        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if "disambiguation_policy" in data else []
+        self.allowed_entities = data["allowed_entities"] if data and "allowed_entities" in data else {}
+        self.intent_substitutions = data["intent_substitutions"] if data and "intent_substitutions" in data else []
+        self.input_validation = InputValidator(data["input_validation"]) if data and "input_validation" in data else []
+        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if data and "disambiguation_policy" in data else []
 
     def interrupts(self, dispatcher, parse_data, tracker, run_action):
 
@@ -65,7 +65,8 @@ class Rules(object):
         previous_action = self._get_previous_action(tracker)
 
         for rule in self.intent_substitutions:
-            Rules._swap_intent(parse_data, previous_action, rule)
+            if Rules._swap_intent(parse_data, previous_action, rule):
+                break
 
     @staticmethod
     def _swap_intent(parse_data, previous_action, rule):
@@ -75,11 +76,11 @@ class Rules(object):
 
         # for an after rule
         if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
-            Rules._swap_intent_after(parse_data, rule)
+            return Rules._swap_intent_after(parse_data, rule)
 
         # for a general substitution
         elif 'after' not in rule and re.match(rule['intent'], parse_data['intent']['name']):
-            Rules.swap_intent_with(parse_data, rule)
+            return Rules.swap_intent_with(parse_data, rule)
 
     @staticmethod
     def _swap_intent_after(parse_data, rule):
@@ -89,6 +90,7 @@ class Rules(object):
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
             parse_data.pop('intent_ranking', None)
+            return True
 
     @staticmethod
     def swap_intent_with(parse_data, rule):
@@ -105,6 +107,7 @@ class Rules(object):
                     parse_data['entities'] = []
                 parse_data['entities'].append(
                     {"entity": format(entity["name"], pd_copy), "value": format(entity["value"], pd_copy)})
+        return True
 
     def _get_previous_action(self, tracker):
         action_listen_found = False

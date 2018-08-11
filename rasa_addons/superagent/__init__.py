@@ -15,16 +15,18 @@ class SuperAgent(Agent):
             interpreter=None,  # type: Optional[NaturalLanguageInterpreter]
             tracker_store=None,  # type: Optional[TrackerStore]
             create_dispatcher=None,  # type: Optional[LambdaType]
+            generator=None,  # type: Union[EndpointConfig, NLG]
             rules_file=None  # type: Optional[str]
     ):
         self.processor = None
         self.create_dispatcher = create_dispatcher
         self.rules_file = rules_file
         super(SuperAgent, self).__init__(
-            domain,
-            policies,
-            interpreter,
-            tracker_store
+            domain=domain,
+            policies=policies,
+            generator=generator,
+            interpreter=interpreter,
+            tracker_store=tracker_store
         )
 
     @classmethod
@@ -34,6 +36,7 @@ class SuperAgent(Agent):
              tracker_store=None,
              action_factory=None,
              rules_file=None,
+             generator=None,
              create_dispatcher=None):
         # type: (Text, Any, Optional[TrackerStore]) -> Agent
 
@@ -46,7 +49,15 @@ class SuperAgent(Agent):
         ensemble = PolicyEnsemble.load(path)
         _interpreter = NaturalLanguageInterpreter.create(interpreter)
         _tracker_store = cls.create_tracker_store(tracker_store, domain)
-        return cls(domain, ensemble, _interpreter, _tracker_store, rules_file=rules_file, create_dispatcher=create_dispatcher)
+        return cls(
+                domain=domain,
+                policies=ensemble,
+                interpreter=_interpreter,
+                tracker_store=_tracker_store,
+                rules_file=rules_file,
+                generator=generator,
+                create_dispatcher=create_dispatcher
+        )
 
     def _create_processor(self, preprocessor=None):
         # type: (Callable[[Text], Text]) -> MessageProcessor
@@ -59,5 +70,6 @@ class SuperAgent(Agent):
                                                self.tracker_store,
                                                create_dispatcher=self.create_dispatcher,
                                                message_preprocessor=preprocessor,
+                                               generator=self.nlg,
                                                rules_file=self.rules_file)
         return self.processor
