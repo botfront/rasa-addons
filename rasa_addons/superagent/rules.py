@@ -6,7 +6,7 @@ import logging
 import copy
 from rasa_core.events import ActionExecuted
 
-from rasa_addons.superagent.dismabiguator import Disambiguator
+from rasa_addons.superagent.disambiguator import Disambiguator
 from rasa_addons.superagent.input_validator import InputValidator
 
 from rasa_addons.superagent.input_validator import ActionInvalidUtterance
@@ -20,7 +20,8 @@ class Rules(object):
         self.allowed_entities = data["allowed_entities"] if data and "allowed_entities" in data else {}
         self.intent_substitutions = data["intent_substitutions"] if data and "intent_substitutions" in data else []
         self.input_validation = InputValidator(data["input_validation"]) if data and "input_validation" in data else []
-        self.disambiguation_policy = Disambiguator(data["disambiguation_policy"]) if data and "disambiguation_policy" in data else []
+        self.disambiguation_policy = Disambiguator(data.get("disambiguation_policy", None) if data else None, 
+                                                   data.get("fallback_policy", None) if data else None)
 
     def interrupts(self, dispatcher, parse_data, tracker, run_action):
 

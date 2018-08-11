@@ -6,10 +6,9 @@ from rasa_core.events import Restarted
 
 
 class Disambiguator(object):
-    def __init__(self, rules):
-        rules = rules["nlu"] if "nlu" in rules else {}
+    def __init__(self, disamb_rule=None, fallback_rule=None):
 
-        self.schema = Schema({Optional("disambiguation"): {
+        self.disamb_schema = Schema({
                                 "trigger": And(str, len),
                                 Optional("max_suggestions", default=2): int,
                                 "display": {
@@ -21,8 +20,8 @@ class Disambiguator(object):
                                         "payload": And(str, len, error="fallback button payload is required")
                                     }
                                 }   
-                            },
-                            Optional("fallback"): {
+                            })
+        self.fallback_schema = Schema({
                                 "trigger": And(str, len),
                                 "display": {
                                     "text": And(str, len),
@@ -30,13 +29,14 @@ class Disambiguator(object):
                                         [{"title": And(str, len, error="button title is required"), 
                                         "payload": And(str, len, error="button title is required")}]
                                     }
-                                }
-                            })
+                                })
+        if disamb_rule:
+            self.disamb_schema.validate(disamb_rule)
+        if fallback_rule:
+            self.fallback_schema.validate(fallback_rule)
 
-        self.schema.validate(rules)
-
-        self.disamb_rule = rules.get("disambiguation", None)
-        self.fallback_rule = rules.get("fallback", None)
+        self.disamb_rule = disamb_rule
+        self.fallback_rule = fallback_rule
 
         if self.disamb_rule and "max_suggestion" not in self.disamb_rule:
             self.disamb_rule["max_suggestions"] = 2
@@ -50,7 +50,7 @@ class Disambiguator(object):
         eval_string = trigger
         matches = re.findall(pattern, trigger)
         for i in matches:
-            # if not enough intents in ranking to apply the rule, no fallback can be done
+            # if not enough intents in ranking to apply the rule, policy rule can't be triggered
             if int(i) >= len(parse_data["intent_ranking"]):
                 return False
             eval_string = re.sub(r'\$' + i, str(parse_data["intent_ranking"][int(i)]["confidence"]), eval_string)
@@ -104,22 +104,24 @@ class ActionDisambiguate(Action):
         self.intents = intents
 
     @staticmethod
-    def get_disambiguation_message(dispatcher, rule, payloads, intents):
+    def get_disambiguation_message(dispatcher, rule, payloads, intents, tracker):
         buttons = list(
-            [{"title": dispatcher.retrieve_template(
-                "{}_{}".format(rule["display"]["button_title_template_prefix"], i[0]))[
+            [{"title": dispatcher.nlg.generate(
+                "{}_{}".format(rule["display"]["button_title_template_prefix"], i[0]), 
+                                tracker, dispatcher.output_channel)[
                 "text"], "payload": i[1]} for i in zip(intents, payloads)])
 
         if "fallback_button" in rule["display"] and \
             "title" in rule["display"]["fallback_button"] and \
             "payload" in rule["display"]["fallback_button"]:
             buttons.append(
-                {"title": dispatcher.retrieve_template(rule["display"]["fallback_button"]["title"])["text"],
+                {"title": dispatcher.nlg.generate(rule["display"]["fallback_button"]["title"],
+                                                tracker, dispatcher.output_channel)["text"],
                  "payload": rule["display"]["fallback_button"]["payload"]
                  })
 
         disambiguation_message = {
-            "text": dispatcher.retrieve_template(rule["display"]["text_template"])["text"],
+            "text": dispatcher.nlg.generate(rule["display"]["text_template"], tracker, dispatcher.output_channel)["text"],
             "buttons": buttons
         }
 
@@ -129,7 +131,7 @@ class ActionDisambiguate(Action):
         if "intro_template" in self.rule["display"]:
             dispatcher.utter_template(self.rule["display"]["intro_template"], tracker)
 
-        disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads, self.intents)
+        disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads, self.intents, tracker)
 
         dispatcher.utter_response(disambiguation_message)
         return [Restarted()]
@@ -143,20 +145,20 @@ class ActionFallback(Action):
         self.rule = rule
 
     @staticmethod
-    def get_fallback_message(dispatcher, rule):
+    def get_fallback_message(dispatcher, rule, tracker):
         fallback_message = {
-            "text": dispatcher.retrieve_template(rule["display"]["text"])["text"]
+            "text": dispatcher.nlg.generate(rule["display"]["text"], tracker, dispatcher.output_channel)["text"]
         }
         if "buttons" in rule["display"]:
             buttons = list(
-                [{"title": dispatcher.retrieve_template(button["title"])["text"], 
+                [{"title": dispatcher.nlg.generate(button["title"], tracker, dispatcher.output_channel)["text"], 
                 "payload": button["payload"]} for button in rule["display"]["buttons"]])
             fallback_message["buttons"] = buttons
         return fallback_message
 
     def run(self, dispatcher, tracker, domain):
 
-        fallback_message = self.get_fallback_message(dispatcher, self.rule)
+        fallback_message = self.get_fallback_message(dispatcher, self.rule, tracker)
 
         dispatcher.utter_response(fallback_message)
         return [Restarted()]

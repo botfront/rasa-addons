@@ -1,29 +1,35 @@
 import os
 import pytest
-from rasa_addons.superagent.dismabiguator import Disambiguator, ActionDisambiguate, ActionFallback
+from rasa_addons.superagent.disambiguator import Disambiguator, ActionDisambiguate, ActionFallback
 from rasa_addons.superagent.rules import Rules
 from rasa_addons.utils import load_yaml
 from schema import SchemaError
-from rasa_core.dispatcher import Dispatcher
+from rasa_addons.tests import TestNLG as StubNLG
+
 
 ROOT_PATH = os.path.join(os.getcwd(), 'tests')
 
 
-class TestDispatcher(object):
+class StubDispatcher(object):
 
-    def retrieve_template(self, template_name, filled_slots=None, **kwargs):
-        """Retrieve a named template from the domain."""
-        return {"text": template_name}
+    def __init__(self):
+        self.nlg = StubNLG(None)
+        self.output_channel = None
+
+class StubTracker(object):
+    pass
+
+tracker = StubTracker()
 
 """disambiguation-only tests"""
 
-def test_dismab_trigger_wrong_format():
+def test_disamb_trigger_wrong_format():
     with pytest.raises(SchemaError) as e:
-        Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator3.yaml')['disambiguation_policy'])
+        Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator3.yaml')['disambiguation_policy'])
 
 
-def test_dismab_trigger1():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
+def test_disamb_trigger1():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.5}]
@@ -31,8 +37,8 @@ def test_dismab_trigger1():
     result = disambiguator.should_disambiguate(parse_data)
     assert result is True
 
-def test_dismab_trigger2():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
+def test_disamb_trigger2():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}]
@@ -41,8 +47,8 @@ def test_dismab_trigger2():
     assert result is False
 
 
-def test_dismab_buttons_with_fallback():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
+def test_disamb_buttons_with_fallback():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}]
@@ -62,14 +68,15 @@ def test_dismab_buttons_with_fallback():
         }]
     }
 
-    dispatcher = TestDispatcher()
+    dispatcher = StubDispatcher()
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
                                                          disambiguator.get_payloads(parse_data),
-                                                         disambiguator.get_intent_names(parse_data)) == expected
+                                                         disambiguator.get_intent_names(parse_data),
+                                                         tracker) == expected
 
 
-def test_dismab_buttons_without_fallback():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
+def test_buttons_without_fallback():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}]
@@ -86,14 +93,15 @@ def test_dismab_buttons_without_fallback():
         }]
     }
 
-    dispatcher = TestDispatcher()
+    dispatcher = StubDispatcher()
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
                                                          disambiguator.get_payloads(parse_data),
-                                                         disambiguator.get_intent_names(parse_data)) == expected
+                                                         disambiguator.get_intent_names(parse_data),
+                                                         tracker) == expected
 
 
-def test_dismab_with_entities():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
+def test_disamb_with_entities():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}],
@@ -110,29 +118,44 @@ def test_dismab_with_entities():
             "payload": "/intentB{\"entity1\": \"value1\"}"
         }]
     }
-    dispatcher = TestDispatcher()
+    dispatcher = StubDispatcher()
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
                                                          disambiguator.get_payloads(parse_data),
-                                                         disambiguator.get_intent_names(parse_data)) == expected
+                                                         disambiguator.get_intent_names(parse_data),
+                                                         tracker) == expected
 
 
-def test_dismab_does_not_disambiguate_when_data_is_missing_in_parse_data():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
+def test_disamb_does_not_trigger_when_data_is_missing_in_parse_data():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
 
     parse_data = {
 
     }
     assert disambiguator.should_disambiguate(parse_data) is False
 
+def test_fallback_does_not_trigger_when_intent_is_null():
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
+
+    parse_data = {  
+        "intent": {
+            "name": None,
+            "confidence": 0.0
+        },
+        "entities": [],
+        "intent_ranking": []
+    }
+
+    assert disambiguator.should_disambiguate(parse_data) is False
+
 """fallback-only tests"""
 
 def test_fallback_trigger_wrong_format():
     with pytest.raises(SchemaError) as e:
-        Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator5.yaml')['disambiguation_policy'])
+        Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator5.yaml')['fallback_policy'])
 
 
 def test_fallback_trigger1():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator6.yaml')['disambiguation_policy'])
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator6.yaml')['fallback_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.49}, {"name": "intentB", "confidence": 0.3}]
@@ -141,7 +164,7 @@ def test_fallback_trigger1():
     assert result is True
 
 def test_fallback_trigger2():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator6.yaml')['disambiguation_policy'])
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator6.yaml')['fallback_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}]
@@ -151,7 +174,7 @@ def test_fallback_trigger2():
 
 
 def test_fallback_buttons_with_fallback():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator6.yaml')['disambiguation_policy'])
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator6.yaml')['fallback_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.49}, {"name": "intentB", "confidence": 0.3}]
@@ -168,11 +191,11 @@ def test_fallback_buttons_with_fallback():
         }]
     }
 
-    dispatcher = TestDispatcher()
-    assert ActionFallback.get_fallback_message(dispatcher, disambiguator.fallback_rule) == expected
+    dispatcher = StubDispatcher()
+    assert ActionFallback.get_fallback_message(dispatcher, disambiguator.fallback_rule, tracker) == expected
 
 def test_fallback_buttons_without_fallback():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['disambiguation_policy'])
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['fallback_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.49}, {"name": "intentB", "confidence": 0.3}]
@@ -182,29 +205,46 @@ def test_fallback_buttons_without_fallback():
         "text": "utter_fallback_intro"
     }
 
-    dispatcher = TestDispatcher()
-    assert ActionFallback.get_fallback_message(dispatcher, disambiguator.fallback_rule) == expected
+    dispatcher = StubDispatcher()
+    assert ActionFallback.get_fallback_message(dispatcher, disambiguator.fallback_rule, tracker) == expected
 
 
-def test_fallback_does_not_disambiguate_when_data_is_missing_in_parse_data():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['disambiguation_policy'])
+def test_fallback_does_not_trigger_when_data_is_missing_in_parse_data():
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['fallback_policy'])
 
     parse_data = {
 
     }
     assert disambiguator.should_fallback(parse_data) is False
 
+def test_fallback_does_not_trigger_when_intent_is_null():
+    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['fallback_policy'])
+
+    parse_data = {  
+        "intent": {
+            "name": "",
+            "confidence": 0.0
+        },
+        "entities": [],
+        "intent_ranking": []
+    }
+
+    assert disambiguator.should_fallback(parse_data) is False
+
 """disambiguation and fallback tests"""
 
 
-def test_dismab_and_fallback_trigger_wrong_format():
+def test_disamb_and_fallback_trigger_wrong_format():
     with pytest.raises(SchemaError) as e:
-        Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator8.yaml')['disambiguation_policy'])
+        rules = load_yaml('./tests/disambiguator/test_disambiguator8.yaml')
+        disambiguator = Disambiguator(disamb_rule=rules['disambiguation_policy'], 
+                                    fallback_rule=rules['fallback_policy'])
 
 
-def test_dismab_and_fallback_trigger_any1():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator9.yaml')['disambiguation_policy'])
-
+def test_disamb_and_fallback_trigger_any1():
+    rules = load_yaml('./tests/disambiguator/test_disambiguator9.yaml')
+    disambiguator = Disambiguator(disamb_rule=rules['disambiguation_policy'],
+                                fallback_rule=rules['fallback_policy'])
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.4}]
     }
@@ -212,9 +252,10 @@ def test_dismab_and_fallback_trigger_any1():
     result = disambiguator.should_fallback(parse_data) or disambiguator.should_disambiguate(parse_data)
     assert result is True
 
-def test_dismab_and_fallback_trigger_any2():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator9.yaml')['disambiguation_policy'])
-
+def test_disamb_and_fallback_trigger_any2():
+    rules = load_yaml('./tests/disambiguator/test_disambiguator9.yaml')
+    disambiguator = Disambiguator(disamb_rule=rules['disambiguation_policy'],
+                                fallback_rule=rules['fallback_policy'])
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}]
     }
@@ -223,8 +264,10 @@ def test_dismab_and_fallback_trigger_any2():
     assert result is False
 
 
-def test_dismab_and_fallback_trigger_both():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator9.yaml')['disambiguation_policy'])
+def test_disamb_and_fallback_trigger_both():
+    rules = load_yaml('./tests/disambiguator/test_disambiguator9.yaml')
+    disambiguator = Disambiguator(disamb_rule=rules['disambiguation_policy'],
+                                fallback_rule=rules['fallback_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.49}, {"name": "intentB", "confidence": 0.4}]
@@ -233,8 +276,10 @@ def test_dismab_and_fallback_trigger_both():
     result = disambiguator.should_fallback(parse_data) and disambiguator.should_disambiguate(parse_data)
     assert result is True
 
-def test_dismab_and_fallback_trigger_none():
-    disambiguator = Disambiguator(load_yaml('./tests/disambiguator/test_disambiguator9.yaml')['disambiguation_policy'])
+def test_disamb_and_fallback_trigger_none():
+    rules = load_yaml('./tests/disambiguator/test_disambiguator9.yaml')
+    disambiguator = Disambiguator(disamb_rule=rules['disambiguation_policy'],
+                                fallback_rule=rules['fallback_policy'])
 
     parse_data = {
         "intent_ranking": [{"name": "intentA", "confidence": 0.51}, {"name": "intentB", "confidence": 0.25}]

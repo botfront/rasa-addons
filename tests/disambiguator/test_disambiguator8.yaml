@@ -1,7 +1,5 @@
 disambiguation_policy:
-  nlu:
-    disambiguation:
-      trigger: $0 < 2 * $1
-      max_suggestions: 2
-    fallback:
-      trigger: $0 < 0.5
+  trigger: $0 < 2 * $1
+  max_suggestions: 2
+fallback_policy:
+  trigger: $0 < 0.5 

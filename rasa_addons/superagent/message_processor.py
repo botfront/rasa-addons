@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from rasa_addons.superagent.dismabiguator import ActionDisambiguate
+from rasa_addons.superagent.disambiguator import ActionDisambiguate
 from rasa_addons.superagent.rules import Rules
 from rasa_core.events import UserUttered
 from rasa_core.processor import MessageProcessor
