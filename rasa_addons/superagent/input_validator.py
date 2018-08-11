@@ -65,7 +65,7 @@ class ActionInvalidUtterance(Action):
         self.template = template
 
     def run(self, dispatcher, tracker, domain):
-        dispatcher.utter_template(self.template)
+        dispatcher.utter_template(self.template, tracker)
 
         # utter error message
         latest_bot_message = {"text": tracker.latest_bot_utterance.text}
