@@ -8,10 +8,8 @@ install:
 - pip install -r requirements.txt
 - pip install pytest-cov
 
-#script:
-#- python -m pytest
 script:
-- py.test tests --cov=codecov
+- python -m pytest --cov=codecov
 after_success:
   - codecov
 all_branches: true
