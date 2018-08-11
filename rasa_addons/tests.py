@@ -29,6 +29,7 @@ R_TITLE = re.compile('##\s*(.+)')
 R_USER = re.compile('\*\s*(.+)')
 R_ACTION = re.compile('\s+- (utter_.+)')
 
+
 class TestOutputChannel(OutputChannel):
     """Simple bot that outputs the bots messages to the command line."""
 
@@ -55,6 +56,7 @@ class TestInputChannel(InputChannel):
     def start_sync_listening(self, message_handler):
         self.on_message = message_handler
 
+
 class TestSession(object):
     def __init__(self,
                  model=None,
@@ -64,7 +66,7 @@ class TestSession(object):
                  distinct=True,
                  rules=None,
                  interpreter=RegexInterpreter(),
-                 create_outputchannel=lambda on_response, domain, processor: TestOutputChannel(on_response, domain, processor),
+                 create_output_channel=lambda on_response, domain, processor: TestOutputChannel(on_response, domain, processor),
 
                  ):
         self.model = model
@@ -72,7 +74,7 @@ class TestSession(object):
         self.interpreter = interpreter
         self.domain = TemplateDomain.load(domain)
         self.input_channel = TestInputChannel()
-        self.create_outputchannel = create_outputchannel
+        self.create_output_channel = create_output_channel
         self.agent = self._create_agent(self.input_channel, self.interpreter, model, rules)
 
         self.stories = self._build_stories_from_path(test_cases)
@@ -118,7 +120,7 @@ class TestSession(object):
             utils.print_color(utterance, utils.bcolors.OKGREEN)
 
             self.input_channel.on_message(
-                UserMessage(utterance, self.create_outputchannel(on_response, self.domain, self.agent.processor), sender_id))
+                UserMessage(utterance, self.create_output_channel(on_response, self.domain, self.agent.processor), sender_id))
 
     @staticmethod
     def _concatenate_storyfiles(folder_path, prefix='test', output='aggregated_test_cases.md'):
@@ -180,10 +182,11 @@ class TestSession(object):
         agent = SuperAgent.load(model,
                                 interpreter=interpreter,
                                 generator=TestNLG(None),
-                                # rules_file=rules
+                                rules_file=rules
                                 )
         agent.handle_channel(input_channel)
         return agent
+
 
 def create_argparser():
     parser = argparse.ArgumentParser(
@@ -211,6 +214,7 @@ def create_argparser():
                         action="store_true",
                         default=False)
     return parser
+
 
 if __name__ == "__main__":
     parser = create_argparser()

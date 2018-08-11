@@ -127,7 +127,7 @@ class ActionDisambiguate(Action):
 
     def run(self, dispatcher, tracker, domain):
         if "intro_template" in self.rule["display"]:
-            dispatcher.utter_template(self.rule["display"]["intro_template"])
+            dispatcher.utter_template(self.rule["display"]["intro_template"], tracker)
 
         disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads, self.intents)
 
