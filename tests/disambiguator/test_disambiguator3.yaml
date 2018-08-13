@@ -1,3 +1,2 @@
 disambiguation_policy:
-  nlu:
-    trigger: $0 < 2 * $1
+  trigger: $0 < 2 * $1

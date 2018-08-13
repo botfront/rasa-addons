@@ -62,6 +62,8 @@ Rules are enforced at the tracker level, so there is no need to retrain when cha
 
 ## Disambiguate user input and fallback
 
+### Disambiguation policy
+
 Help your users when your NLU struggles to identify the right intent. Instead of just going with the highest scoring intent
 you can ask the user to pick from a list of likely intents. 
 
@@ -73,23 +75,61 @@ The bot will utter:
  - the text is the template defined as `text_template`, 
  - the button titles will be the concatenation of "utter_disamb" and the intent name. For example, `utter_disamb_greet`."   
  - the buttons payloads will be the corresponding intents (e.g. `/greet`). Entities found in `parse_data` are passed on.
+3. A fallback button to go along with disambiguation buttons (if the optional field `fallback_button` is present)  
  
 ```yaml
 disambiguation_policy:
-  nlu:
-    trigger: $0 < 2 * $1
-    display:
-      type: text_with_buttons
-      intro_template: utter_disamb_intro
-      text_template: utter_disamb_text
-      button_title_template_prefix: utter_disamb
-      fallback_title: utter_fallback
-      fallback_payload: /fallback
-      max_suggestions: 2
+  trigger: $0 < 2 * $1
+  max_suggestions: 2
+  display:
+    intro_template: utter_disamb_intro
+    text_template: utter_disamb_text
+    button_title_template_prefix: utter_disamb
+    fallback_button:
+      title: utter_fallback_yes
+      payload: /fallback
 ```
-Note about the trigger. `$0` corresponds to `parse_data['intent_ranking][0]["confidence"]`. You can set any rule based on intent ranking
+Note about the trigger: `$0` corresponds to `parse_data['intent_ranking'][0]["confidence"]`. You can set any rule based on intent ranking
+
+### Fallback policy
+
+You may want to make the bot go straight to suggesting fallback (e.g when the top intent ranking is low).
+
+In the example below, fallback is triggered when the top scoring intent's confidence is below 0.5.
+
+The bot will utter:
+1. An intro message `utter_fallback_intro`
+2. Optional buttons (if `buttons` list with at least one item - a pair of `title` and `payload` - is defined).
+
+```yaml
+fallback_policy:
+  trigger: $0 < 0.5
+  display:
+    text: utter_fallback_intro
+    buttons:
+      - title: utter_fallback_yes
+        payload: /fallback
+      - title: utter_fallback_no
+        payload: /restart
+```
+
+There is no limit on the number of buttons you can define for fallback. If no buttons are defined, this
+policy will simply make the bot utter some default message (e.g `utter_fallback_intro`) when the top intent confidence is lower than the trigger.
 
 
+### Using both disambiguation and fallback policies
+
+It's easy to combine both disambiguation and fallback policies. It can be done by filling in policy definitions from two previous examples as follows:
+
+```yaml
+disambiguation_policy:
+      (...disambiguation policy definition...)
+
+fallback_policy:
+      (...fallback policy definition...)
+```
+
+In cases when intent confidence scores in parsed data are such that would cause both policies to trigger, only fallback policy is trigerred. In other words, **fallback policy has precedence over disambiguation policy**.
 
 ## Swap intents
 Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. 

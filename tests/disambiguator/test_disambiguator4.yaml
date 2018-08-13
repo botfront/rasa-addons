@@ -1,10 +1,7 @@
 disambiguation_policy:
-  nlu:
-    trigger: $0 < 2 * $1
-    display:
-      type: text_with_buttons
-      intro_template: utter_disamb_intro
-      text_template: utter_disamb_text
-      button_title_template_prefix: utter_disamb
-      max_suggestions: 2
-
+  trigger: $0 < 2 * $1
+  max_suggestions: 2
+  display:
+    intro_template: utter_disamb_intro
+    text_template: utter_disamb_text
+    button_title_template_prefix: utter_disamb
