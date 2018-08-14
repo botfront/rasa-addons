@@ -18,6 +18,19 @@ Changed
 Removed
 -------
 
+[0.4.3] - 2018-08-14
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Added
+-----
+
+- Fallback policy
+
+Changed
+-------
+
+- Disambiguation and fallback policy rule syntax
 
 [0.4.0] - 2018-08-11
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
