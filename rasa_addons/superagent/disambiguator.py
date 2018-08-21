@@ -18,7 +18,8 @@ class Disambiguator(object):
                                     Optional("fallback_button"): {
                                         "title": And(str, len, error="fallback button title is required"),
                                         "payload": And(str, len, error="fallback button payload is required")
-                                    }
+                                    },
+                                    Optional("exclude", default=[]): list
                                 }   
                             })
         self.fallback_schema = Schema({
@@ -40,6 +41,9 @@ class Disambiguator(object):
 
         if self.disamb_rule and "max_suggestion" not in self.disamb_rule:
             self.disamb_rule["max_suggestions"] = 2
+
+        if self.disamb_rule and "exclude" not in self.disamb_rule["display"]:
+            self.disamb_rule["display"]["exclude"] = []
 
         if self.disamb_rule and "button_title_template_prefix" not in self.disamb_rule["display"]:
             self.disamb_rule["display"]["button_title_template_prefix"] = "utter_disamb"
@@ -69,8 +73,10 @@ class Disambiguator(object):
 
         return self.is_triggered(parse_data, self.disamb_rule["trigger"])
 
-    def get_payloads(self, parse_data, keep_entities=True):
-        intents = list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.disamb_rule["max_suggestions"]]
+    def should_exclude(self, intent_name):
+        return any([re.match(x, intent_name) for x in self.disamb_rule["display"]["exclude"]])
+
+    def get_payloads(self, parse_data, intents, keep_entities=True):
         entities = ""
         if "entities" in parse_data and keep_entities:
             entities = json.dumps(dict(map(lambda e: (e["entity"], e["value"]), parse_data["entities"])))
@@ -78,13 +84,17 @@ class Disambiguator(object):
         return payloads
 
     def get_intent_names(self, parse_data):
-        return list(map(lambda x: x["name"], parse_data["intent_ranking"]))[:self.disamb_rule["max_suggestions"]]
+        intent_names = list(map(lambda x: x["name"], parse_data["intent_ranking"]))
+        if self.disamb_rule["display"]["exclude"]:
+            intent_names = list(filter(lambda x: not self.should_exclude(x), intent_names))
+        return intent_names[:self.disamb_rule["max_suggestions"]]
 
     def disambiguate(self, parse_data, tracker, dispatcher, run_action):
         should_disambiguate = self.should_disambiguate(parse_data)
 
         if should_disambiguate:
-            action = ActionDisambiguate(self.disamb_rule, self.get_payloads(parse_data), self.get_intent_names(parse_data))
+            intents = self.get_intent_names(parse_data)
+            action = ActionDisambiguate(self.disamb_rule, self.get_payloads(parse_data, intents), intents)
             run_action(action, tracker, dispatcher)
             return True
 

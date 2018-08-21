@@ -69,9 +69,10 @@ def test_disamb_buttons_with_fallback():
     }
 
     dispatcher = StubDispatcher()
+    intents = disambiguator.get_intent_names(parse_data)
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
-                                                         disambiguator.get_payloads(parse_data),
-                                                         disambiguator.get_intent_names(parse_data),
+                                                         disambiguator.get_payloads(parse_data, intents),
+                                                         intents,
                                                          tracker) == expected
 
 
@@ -94,9 +95,10 @@ def test_buttons_without_fallback():
     }
 
     dispatcher = StubDispatcher()
+    intents = disambiguator.get_intent_names(parse_data)
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
-                                                         disambiguator.get_payloads(parse_data),
-                                                         disambiguator.get_intent_names(parse_data),
+                                                         disambiguator.get_payloads(parse_data, intents),
+                                                         intents,
                                                          tracker) == expected
 
 
@@ -119,9 +121,10 @@ def test_disamb_with_entities():
         }]
     }
     dispatcher = StubDispatcher()
+    intents = disambiguator.get_intent_names(parse_data)
     assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
-                                                         disambiguator.get_payloads(parse_data),
-                                                         disambiguator.get_intent_names(parse_data),
+                                                         disambiguator.get_payloads(parse_data, intents),
+                                                         intents,
                                                          tracker) == expected
 
 
@@ -133,8 +136,8 @@ def test_disamb_does_not_trigger_when_data_is_missing_in_parse_data():
     }
     assert disambiguator.should_disambiguate(parse_data) is False
 
-def test_fallback_does_not_trigger_when_intent_is_null():
-    disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
+def test_disamb_does_not_trigger_when_intent_is_null():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
 
     parse_data = {  
         "intent": {
@@ -146,6 +149,67 @@ def test_fallback_does_not_trigger_when_intent_is_null():
     }
 
     assert disambiguator.should_disambiguate(parse_data) is False
+
+def test_disamb_exclude_exact():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator10.yaml')['disambiguation_policy'])
+
+    parse_data = {
+        "intent_ranking": [{"name": "intentA", "confidence": 0.4}, {"name": "intentB", "confidence": 0.3}, {"name": "intentC", "confidence": 0.3}]
+    }
+
+    expected = {
+        "text": "utter_disamb_text",
+        "buttons": [{
+            "title": "utter_disamb_intentA",
+            "payload": "/intentA"
+        }, {
+            "title": "utter_disamb_intentC",
+            "payload": "/intentC"
+        }, {
+            "title": "utter_fallback",
+            "payload": "/fallback"
+        }]
+    }
+
+    dispatcher = StubDispatcher()
+    intents = disambiguator.get_intent_names(parse_data)
+    assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
+                                                         disambiguator.get_payloads(parse_data, intents),
+                                                         intents,
+                                                         tracker) == expected
+
+def test_disamb_exclude_regex():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator11.yaml')['disambiguation_policy'])
+
+    parse_data = {
+        "intent_ranking": [{"name": "chitchat.insults", "confidence": 0.3}, 
+                            {"name": "intentA", "confidence": 0.2}, 
+                            {"name": "chitchat.this_is_bad", "confidence": 0.2}, 
+                            {"name": "basics.yes", "confidence": 0.15},
+                            {"name": "intentB", "confidence": 0.15}],
+        "entities": [{"entity": "entity1", "value": "value1"}]
+    }
+
+    expected = {
+        "text": "utter_disamb_text",
+        "buttons": [{
+            "title": "utter_disamb_intentA",
+            "payload": "/intentA{\"entity1\": \"value1\"}"
+        }, {
+            "title": "utter_disamb_intentB",
+            "payload": "/intentB{\"entity1\": \"value1\"}"
+        }, {
+            "title": "utter_fallback",
+            "payload": "/fallback"
+        }]
+    }
+
+    dispatcher = StubDispatcher()
+    intents = disambiguator.get_intent_names(parse_data)
+    assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
+                                                         disambiguator.get_payloads(parse_data, intents),
+                                                         intents,
+                                                         tracker) == expected
 
 """fallback-only tests"""
 

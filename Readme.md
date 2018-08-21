@@ -75,7 +75,9 @@ The bot will utter:
  - the text is the template defined as `text_template`, 
  - the button titles will be the concatenation of "utter_disamb" and the intent name. For example, `utter_disamb_greet`."   
  - the buttons payloads will be the corresponding intents (e.g. `/greet`). Entities found in `parse_data` are passed on.
-3. A fallback button to go along with disambiguation buttons (if the optional field `fallback_button` is present)  
+3. A fallback button to go along with disambiguation buttons (if the optional field `fallback_button` is present) 
+
+It's also possible to exclude certain intents from being displayed as a disambiguation option by using optional `exclude` list field. In the example below, all intents that match regex `chitchat\..*` and `basics\..*`, as well as intent `cancel` will not be displayed as an option. The next highest scoring intents will be displayed in place of excluded ones.
  
 ```yaml
 disambiguation_policy:
@@ -88,8 +90,12 @@ disambiguation_policy:
     fallback_button:
       title: utter_fallback_yes
       payload: /fallback
+    exclude:
+      - chitchat\..*
+      - basics\..*
+      - cancel
 ```
-Note about the trigger: `$0` corresponds to `parse_data['intent_ranking'][0]["confidence"]`. You can set any rule based on intent ranking
+Note about the trigger: `$0` corresponds to `parse_data['intent_ranking'][0]["confidence"]`. You can set any rule based on intent ranking. Intent scores are checked against the trigger before any intent is excluded with `exclude`.
 
 ### Fallback policy
 
