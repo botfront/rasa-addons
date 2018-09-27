@@ -9,5 +9,5 @@ setup(
     licence='Apache 2.0',
     url='http://mrbot.ai',
     author_email='human@mrbot.ai',
-    packages=['rasa_addons', 'rasa_addons.domains']
+    packages=['rasa_addons']
 )
