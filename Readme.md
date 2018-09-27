@@ -25,7 +25,7 @@ pip install rasa-addons
 Rasa core >= 0.11.x
 
 ```bash
-pip install  git+https://github.com/mrbot-ai/rasa-addons
+pip install  git+https://github.com/mrbot-ai/rasa-addons@rasacore-0.11-support
 ```
 Note that automated tests are not yet working with 0.11. Working on it.
 
