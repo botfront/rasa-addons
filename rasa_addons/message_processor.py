@@ -21,6 +21,7 @@ class SuperMessageProcessor(MessageProcessor):
                  domain,  # type: Domain
                  tracker_store,  # type: TrackerStore
                  generator,  # type: NaturalLanguageGenerator
+                 action_endpoint=None,  # type: Optional[EndpointConfig]
                  max_number_of_predictions=10,  # type: int
                  message_preprocessor=None,  # type: Optional[LambdaType]
                  on_circuit_break=None,  # type: Optional[LambdaType]
@@ -35,10 +36,12 @@ class SuperMessageProcessor(MessageProcessor):
             domain,
             tracker_store,
             generator,
+            action_endpoint,
             max_number_of_predictions,
             message_preprocessor,
             on_circuit_break
         )
+
         self.create_dispatcher = create_dispatcher
         if self.create_dispatcher is None:
             self.create_dispatcher = lambda sender_id, output_channel, nlg: Dispatcher(sender_id, output_channel, nlg)
@@ -46,7 +49,10 @@ class SuperMessageProcessor(MessageProcessor):
     def _handle_message_with_tracker(self, message, tracker):
         # type: (UserMessage, DialogueStateTracker) -> None
 
-        parse_data = self._parse_message(message)
+        if message.parse_data:
+            parse_data = message.parse_data
+        else:
+            parse_data = self._parse_message(message)
 
         # rules section #
         if self._rule_interrupts(parse_data, tracker, message):
@@ -72,10 +78,13 @@ class SuperMessageProcessor(MessageProcessor):
     def _predict_and_execute_next_action(self, message, tracker):
         # this will actually send the response to the user
 
-        dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.nlg)
+        dispatcher = self.create_dispatcher(message.sender_id,
+                                            message.output_channel,
+                                            self.nlg)
         # keep taking actions decided by the policy until it chooses to 'listen'
         should_predict_another_action = True
         num_predicted_actions = 0
+
         self._log_slots(tracker)
 
         # action loop. predicts actions until we hit action listen
@@ -83,11 +92,13 @@ class SuperMessageProcessor(MessageProcessor):
                and self._should_handle_message(tracker)
                and num_predicted_actions < self.max_number_of_predictions):
             # this actually just calls the policy's method by the same name
-            action = self._get_next_action(tracker)
+            action, policy, confidence = self.predict_next_action(tracker)
 
             should_predict_another_action = self._run_action(action,
                                                              tracker,
-                                                             dispatcher)
+                                                             dispatcher,
+                                                             policy,
+                                                             confidence)
             num_predicted_actions += 1
 
         if (num_predicted_actions == self.max_number_of_predictions and

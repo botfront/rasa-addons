@@ -6,10 +6,9 @@ import logging
 import copy
 from rasa_core.events import ActionExecuted
 
-from rasa_addons.superagent.disambiguator import Disambiguator
-from rasa_addons.superagent.input_validator import InputValidator
+from rasa_addons.disambiguation import Disambiguator
+from rasa_addons.input_validation import InputValidator, ActionInvalidUtterance
 
-from rasa_addons.superagent.input_validator import ActionInvalidUtterance
 logger = logging.getLogger(__name__)
 
 
@@ -25,12 +24,12 @@ class Rules(object):
 
     def interrupts(self, dispatcher, parse_data, tracker, run_action):
 
-        self.run_swap_intent_rules(parse_data, tracker)
-
         # fallback has precedence
         if self.disambiguation_policy.fallback(parse_data, tracker, dispatcher, run_action) or \
         self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
             return True
+
+        self.run_swap_intent_rules(parse_data, tracker)
 
         self.filter_entities(parse_data)
 

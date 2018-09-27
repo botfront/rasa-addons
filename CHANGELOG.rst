@@ -7,7 +7,7 @@ Change Log
 
 Added
 -----
-
+- Compatibility with Rasa Core 0.11.x
 
 
 Changed

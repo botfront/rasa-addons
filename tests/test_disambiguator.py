@@ -1,7 +1,7 @@
 import os
 import pytest
-from rasa_addons.superagent.disambiguator import Disambiguator, ActionDisambiguate, ActionFallback
-from rasa_addons.superagent.rules import Rules
+from rasa_addons.disambiguation import Disambiguator, ActionDisambiguate, ActionFallback
+from rasa_addons.rules import Rules
 from rasa_addons.utils import load_yaml
 from schema import SchemaError
 from rasa_addons.tests import TestNLG as StubNLG

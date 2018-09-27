@@ -48,7 +48,7 @@ class TestNLG(TemplatedNaturalLanguageGenerator):
         return {"text": template_name}
 
 
-class TestInputChannel(InputChannel):
+class TestInputChannel(RestInput):
     """Input channel that reads the user messages from the command line."""
     def __init__(self):
         self.on_message = None
@@ -184,7 +184,7 @@ class TestSession(object):
                                 generator=TestNLG(None),
                                 rules_file=rules
                                 )
-        agent.handle_channel(input_channel)
+        agent.handle_channels([input_channel])
         return agent
 
 

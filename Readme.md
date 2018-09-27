@@ -7,7 +7,7 @@
 
 A set of power tools to 🚀🚀🚀 your productivity with Rasa
 
-- Automated tests
+- Automated tests (not yet working with 0.11)
 - Web chat: a channel to use with our open source web chat widget
 - Input validation: if you expect Yes or No, make sure your users anser Yes or No
 - Intent Substitution: avoid random intents when users enter data without semantic consistency (names, brands, time,...)
@@ -15,11 +15,23 @@ A set of power tools to 🚀🚀🚀 your productivity with Rasa
 
 
 ## Installation
+
+Rasa core < 0.11.x
+
 ```bash
 pip install rasa-addons
 ```
 
-## [Web chat](https://github.com/mrbot-ai/webchat) channel
+Rasa core >= 0.11.x
+
+```bash
+pip install  git+https://github.com/mrbot-ai/rasa-addons
+```
+Note that automated tests are not yet working with 0.11. Working on it.
+
+## [Web chat](https://github.com/mrbot-ai/webchat) channel (DEPRECATED)
+
+***DEPRECATED - Use Rasa Core native `SocketIOChannel instead ***
 
 ```python
 from rasa_addons.webchat import WebChatInput, SocketInputChannel
@@ -165,27 +177,6 @@ allowed_entities:
     - product
 ```
 
-## Get templates out of domain files
-
-If you want to get your templates from another source than the domain, you can do it like this:
-
-Create your dispatcher
-```python
-class MyDispatcher(Dispatcher):
-    def retrieve_template(self, template_name, filled_slots=None, **kwargs):
-        """Retrieve a named template from the domain."""
-
-        response = requests.get('api/{template_key}/'.format(...))
-        if response.status_code == 200:
-            r = response.json()
-            if r is not None:
-                return self._fill_template_text(r, filled_slots, **kwargs)
-            
-        else:
-            print("error")
-
-```
-
 Then load your agent
 ```python
 agent = SuperAgent.load(POLICY_PATH,
@@ -194,7 +185,7 @@ agent = SuperAgent.load(POLICY_PATH,
 
 ```
 
-## Run automated tests (experimental)
+## Run automated tests (experimental - not working yet on 0.11)
 You can write test cases as you would write stories, except you should only have `utter_...` actions. 
 
 ```markdown
