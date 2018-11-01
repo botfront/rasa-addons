@@ -202,7 +202,7 @@ agent = SuperAgent.load(POLICY_PATH,
 
 
 You create an intent substitution rule like this:
-```
+```yaml
 intent_substitutions:
 
   - intent: (faq.*)
@@ -217,7 +217,7 @@ This rule will match all intents starting with `faq` (e.g.: `faq.how_do_i_create
 This will change the dialog act to `{intent: "faq", entities: [{intent: "faq.how_do_i_create_a_faq"}]}`
 
 In Core, add this story:
-```
+```md
 ## FAQ
 * faq
   - action_faq
@@ -225,7 +225,7 @@ In Core, add this story:
 
 And this action
 
-```
+```python
 class ActionFAQ(Action):
 
     def name(self):
