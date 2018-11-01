@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-[Unreleased 0.5.0.aX] - `master`_
+[0.5.0] - 2018-11-01
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
@@ -9,14 +9,13 @@ Added
 -----
 - Compatibility with Rasa Core 0.11.x
 
-
 Changed
 -------
 
-
-
 Removed
 -------
+- Webchat channel (use Rasa Core SocketIOInput instead)
+- Automated tests (use Rasa Core evaluation instead)
 
 [0.4.3] - 2018-08-14
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
