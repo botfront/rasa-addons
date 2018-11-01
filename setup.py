@@ -6,7 +6,7 @@ with io.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md
     long_description = f.read()
 setup(
     name='rasa_addons',
-    version='0.5.0',
+    version='0.5.1',
     author='Nathan Zylbersztejn',
     description="Rasa Addons - Productivity tools for Rasa Core",
     long_description=long_description,
