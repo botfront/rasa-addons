@@ -48,13 +48,22 @@ class TestNLG(TemplatedNaturalLanguageGenerator):
         return {"text": template_name}
 
 
-class TestInputChannel(RestInput):
+class TestInputChannel(InputChannel):
     """Input channel that reads the user messages from the command line."""
     def __init__(self):
         self.on_message = None
 
     def start_sync_listening(self, message_handler):
         self.on_message = message_handler
+
+    def blueprint(self, on_new_message):
+        # type: (Callable[[UserMessage], None])-> None
+        """Defines a Flask blueprint.
+
+        The blueprint will be attached to a running flask server and handel
+        incoming routes it registered for."""
+        raise NotImplementedError(
+            "Component listener needs to provide blueprint.")
 
 
 class TestSession(object):
@@ -72,16 +81,20 @@ class TestSession(object):
         self.model = model
         self.distinct = distinct
         self.interpreter = interpreter
-        self.domain = TemplateDomain.load(domain)
+        self.domain = TemplateDomain.load(os.path.join(model,'domain.yml'))
         self.input_channel = TestInputChannel()
         self.create_output_channel = create_output_channel
         self.agent = self._create_agent(self.input_channel, self.interpreter, model, rules)
+        start_server([input_channel], None, None,
+                     int(config.port), agent).serve_forever()
 
         self.stories = self._build_stories_from_path(test_cases)
         if shuffle:
             random.shuffle(stories)
+
         self._run_test_cases()
         self.failed = False
+
 
     def _run_test_cases(self):
         sender_id = "default"
@@ -182,7 +195,7 @@ class TestSession(object):
         agent = SuperAgent.load(model,
                                 interpreter=interpreter,
                                 generator=TestNLG(None),
-                                rules_file=rules
+                                rules=rules
                                 )
         agent.handle_channels([input_channel])
         return agent
@@ -195,9 +208,6 @@ def create_argparser():
     parser.add_argument('-m',
                         '--model',
                         help="Policy path",
-                        required=True)
-    parser.add_argument('-d', '--domain',
-                        help="Domain path",
                         required=True)
     parser.add_argument('-t', '--tests',
                         help="Test cases/stories",
@@ -220,4 +230,4 @@ if __name__ == "__main__":
     parser = create_argparser()
     args = parser.parse_args()
 
-    TestSession(args.model, args.domain, args.tests, args.shuffle, args.distinct, args.rules)
+    TestSession(args.model, args.tests, args.shuffle, args.distinct, args.rules)

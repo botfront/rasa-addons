@@ -7,11 +7,23 @@
 
 A set of power tools to 🚀🚀🚀 your productivity with Rasa
 
-- Automated tests (not yet working with 0.11)
-- Web chat: a channel to use with our open source web chat widget
 - Input validation: if you expect Yes or No, make sure your users anser Yes or No
+- Disambiguation and fallback: automatically display dismabiguation options to users based on custom triggers
 - Intent Substitution: avoid random intents when users enter data without semantic consistency (names, brands, time,...)
-- Custom dispatchers: need to store your Rasa Core templates out of domain file? We've got you covered
+- Filter entities: define entities allowed for each intent
+
+
+- [Installation](#installation)
+- [Usage](#usage)
+	- [Validate user input](#validate-user-input)
+	- [Disambiguate user input and fallback](#disambiguate-user-input-and-fallback)
+		- [Disambiguation policy](#disambiguation-policy)
+		- [Fallback policy](#fallback-policy)
+		- [Using both disambiguation and fallback policies](#using-both-disambiguation-and-fallback-policies)
+	- [Substitute intents](#substitute-intents)
+	- [Filter entities](#filter-entities)
+	- [Bonus - Create a FAQ bot with only ONE action and ONE story](#bonus-create-a-faq-bot-with-only-one-action-and-one-story)
+	- [Where are automated tests ?](#where-are-automated-tests-)
 
 
 ## Installation
@@ -19,20 +31,18 @@ A set of power tools to 🚀🚀🚀 your productivity with Rasa
 Rasa core < 0.11.x
 
 ```bash
-pip install rasa-addons
+pip install rasa-addons==0.4.3
 ```
 
 Rasa core >= 0.11.x
 
 ```bash
-pip install  git+https://github.com/mrbot-ai/rasa-addons@rasacore-0.11-support
+pip install rasa-addons
 ```
-Note that automated tests are not yet working with 0.11. Working on it.
-
 
 ## Usage
 
-You can set rules in a declarative way using a YAML file or a remote endpoint. To do that you must start Rasa Core from a 
+You can set rules in a declarative way using a YAML file or a remote endpoint. To do that you must start Rasa Core from a
 [python script](https://rasa.com/docs/core/connectors/#id18) and include the following snippet
 
 To load rules from a YAML file:
@@ -80,20 +90,20 @@ Rules are enforced at the tracker level, so there is no need to retrain when cha
 #### Disambiguation policy
 
 Help your users when your NLU struggles to identify the right intent. Instead of just going with the highest scoring intent
-you can ask the user to pick from a list of likely intents. 
+you can ask the user to pick from a list of likely intents.
 
 In the example below, the disambiguation is triggered when the score of the highest scoring intent is below twice the score of the second highest scoring intent.
 
-The bot will utter:  
-1. An intro message (if the optional field `intro_template` is present)  
-2. A text with buttons (or quick replies) message where:  
- - the text is the template defined as `text_template`, 
- - the button titles will be the concatenation of "utter_disamb" and the intent name. For example, `utter_disamb_greet`."   
+The bot will utter:
+1. An intro message (if the optional field `intro_template` is present)
+2. A text with buttons (or quick replies) message where:
+ - the text is the template defined as `text_template`,
+ - the button titles will be the concatenation of "utter_disamb" and the intent name. For example, `utter_disamb_greet`."
  - the buttons payloads will be the corresponding intents (e.g. `/greet`). Entities found in `parse_data` are passed on.
-3. A fallback button to go along with disambiguation buttons (if the optional field `fallback_button` is present) 
+3. A fallback button to go along with disambiguation buttons (if the optional field `fallback_button` is present)
 
 It's also possible to exclude certain intents from being displayed as a disambiguation option by using optional `exclude` list field. In the example below, all intents that match regex `chitchat\..*` and `basics\..*`, as well as intent `cancel` will not be displayed as an option. The next highest scoring intents will be displayed in place of excluded ones.
- 
+
 ```yaml
 disambiguation_policy:
   trigger: $0 < 2 * $1
@@ -153,7 +163,7 @@ fallback_policy:
 In cases when intent confidence scores in parsed data are such that would cause both policies to trigger, only fallback policy is trigerred. In other words, **fallback policy has precedence over disambiguation policy**.
 
 ### Substitute intents
-Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun. 
+Some intents are hard to catch. For example when the user is asked to fill arbitrary data such as a date or a proper noun.
 The following rule swaps any intent caught after `utter_when_do_you_want_a_wake_up_call` with `enter_data` unless...
 
 ```yaml
@@ -161,7 +171,7 @@ intent_substitutions:
   - after: utter_when_do_you_want_a_wake_up_call
     intent: enter_data
     unless: frustration|cancel|speak_to_human
-```  
+```
 
 ### Filter entities
 
@@ -188,30 +198,45 @@ agent = SuperAgent.load(POLICY_PATH,
 
 ```
 
-### Run automated tests (experimental - not working yet on 0.11)
-You can write test cases as you would write stories, except you should only have `utter_...` actions. 
+### Bonus - Create a FAQ bot with only ONE action and ONE story
 
-```markdown
-## chitchat.greet
-* chitchat.greet
-  - utter_reply_to_greet
 
-## chitchat.how_are_you
-* chitchat.how_are_you
-  - utter_reply_to_how_are_you
+You create an intent substitution rule like this:
+```
+intent_substitutions:
 
-## chitchat.are_you_a_robot
-* chitchat.are_you_a_robot
-  - utter_reply_to_are_you_a_robot
-
+  - intent: (faq.*)
+    with: faq
+    entities:
+      add:
+      - name: intent
+        value: '{intent}'
 ```
 
-Then you can run your tests with:
-```bash
-python -m rasa_addons.tests -d domains.yml -m models/dialogue/ -t test_cases/ -r rules.yml
+This rule will match all intents starting with `faq` (e.g.: `faq.how_do_i_create_a_faq`)
+This will change the dialog act to `{intent: "faq", entities: [{intent: "faq.how_do_i_create_a_faq"}]}`
+
+In Core, add this story:
+```
+## FAQ
+* faq
+  - action_faq
 ```
 
-You can put your test cases in different files starting with `test` (e.g. `test_chitchat.md`)in a directory.  
-At this time, it only runs the test and outputs dialogues in the console (errors in red). There is no report (Help wanted).
-You can also use `--distinct` to change the `sender_id` at every test case and `--shuffle` to shuffle test cases before running the tests.
+And this action
 
+```
+class ActionFAQ(Action):
+
+    def name(self):
+        return "action_faq"
+
+    def run(self, dispatcher, tracker, domain):
+         # get the original intent from tracker.latest_message and retrieve the correct answer
+```
+
+The benefit of this approach is you have only ONE story for all your questions, so if your Q&A are stored externally you don't have to retrain your bot when adding/changing questions. Since you have only one story for potentially 100's of questions, this means you can better handle side questions in more complex dialogs.
+
+### Where are automated tests ?
+
+Rasa Core will have evaluation tools in 0.12.
