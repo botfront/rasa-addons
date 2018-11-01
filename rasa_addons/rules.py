@@ -1,6 +1,6 @@
 import io
 import re
-
+import requests
 import yaml
 import logging
 import copy
@@ -13,14 +13,29 @@ logger = logging.getLogger(__name__)
 
 
 class Rules(object):
-    def __init__(self, rules_file):
-        data = self._load_yaml(rules_file)
+    def __init__(self, rules_dict):
+        self.rules_dict = {}
+        self.input_validation = None
+        self.allowed_entities = None
+        self.intent_substitutions = None
+        self.disambiguation_policy = None
         self.actions_to_ignore = ['action_listen', 'action_invalid_utterance']
-        self.allowed_entities = data["allowed_entities"] if data and "allowed_entities" in data else {}
-        self.intent_substitutions = data["intent_substitutions"] if data and "intent_substitutions" in data else []
-        self.input_validation = InputValidator(data["input_validation"]) if data and "input_validation" in data else []
-        self.disambiguation_policy = Disambiguator(data.get("disambiguation_policy", None) if data else None, 
-                                                   data.get("fallback_policy", None) if data else None)
+        self.update(rules_dict)
+
+    def update(self, rules_dict):
+        self.rules_dict = rules_dict
+        self.allowed_entities = rules_dict[
+            "allowed_entities"] if rules_dict and "allowed_entities" in rules_dict else {}
+        self.intent_substitutions = rules_dict[
+            "intent_substitutions"] if rules_dict and "intent_substitutions" in rules_dict else []
+        self.input_validation = InputValidator(
+            rules_dict["input_validation"]) if rules_dict and "input_validation" in rules_dict else []
+        self.disambiguation_policy = Disambiguator(
+            rules_dict.get("disambiguation_policy", None) if rules_dict else None,
+            rules_dict.get("fallback_policy", None) if rules_dict else None)
+
+    def get(self):
+        return self.rules_dict
 
     def interrupts(self, dispatcher, parse_data, tracker, run_action):
 
@@ -128,3 +143,20 @@ class Rules(object):
                 return yaml.load(stream)
             except yaml.YAMLError as exc:
                 raise ValueError(exc)
+
+    @classmethod
+    def load_from_remote(cls, endpoint):
+        try:
+            rules = endpoint.request(method='get').json()
+            return Rules(rules)
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def load_from_file(cls, rules_file):
+        try:
+            return Rules(Rules._load_yaml(rules_file))
+        except Exception as e:
+            raise e
+
+

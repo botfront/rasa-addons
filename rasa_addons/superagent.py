@@ -10,6 +10,7 @@ from rasa_core.processor import MessageProcessor
 from rasa_core.dispatcher import Dispatcher
 from rasa_addons.disambiguation import ActionDisambiguate
 from rasa_addons.rules import Rules
+from rasa_core.utils import EndpointConfig
 
 logging.basicConfig()
 logger = logging.getLogger()
@@ -25,13 +26,14 @@ class SuperAgent(Agent):
             action_endpoint=None,  # type: Optional[EndpointConfig]
             fingerprint=None,  # type: Optional[Text]
             create_dispatcher=None,  # type: Optional[LambdaType]
-            create_nlg=None,  # type: Optional[LambdaType]
-            rules_file=None  # type: Optional[str]
+            create_nlg=None,  # type: Optional[LambdaType],
+            rules=None,  # type: Optional[EndpointConfig, str]
     ):
         self.processor = None
         self.create_dispatcher = create_dispatcher
         self.create_nlg = create_nlg
-        self.rules_file = rules_file
+
+        self.rules = self.get_rules(rules)
         # Initializing variables with the passed parameters.
         self.domain = self._create_domain(domain)
         self.policy_ensemble = self._create_ensemble(policies)
@@ -56,6 +58,16 @@ class SuperAgent(Agent):
 
         self._set_fingerprint(fingerprint)
 
+    def get_rules(self, rules_source):
+        if isinstance(rules_source, EndpointConfig):
+            return Rules.load_from_remote(rules_source)
+        elif isinstance(rules_source, str):
+            return Rules.load_from_file(rules_source)
+        elif rules_source is not None:
+            raise ValueError('Rules must be either a path to a yaml file, or an endpoint of which the GET method '
+                             'returns rules in a JSON format')
+        else:
+            return None
 
     @classmethod
     def load(cls,
@@ -102,7 +114,7 @@ class SuperAgent(Agent):
                 tracker_store=tracker_store,
                 generator=generator,
                 action_endpoint=action_endpoint,
-                rules_file=rules_file,
+                rules=rules,
                 create_dispatcher=create_dispatcher,
                 create_nlg=create_nlg
         )
@@ -138,7 +150,7 @@ class SuperMessageProcessor(MessageProcessor):
                  rules_file=None  # type: Optional[str]
                  ):
 
-        self.rules = Rules(rules_file) if rules_file is not None else None
+        self.rules = rules
         super(SuperMessageProcessor, self).__init__(
             interpreter,
             policy_ensemble,
