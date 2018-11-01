@@ -15,6 +15,7 @@ from rasa_core.utils import EndpointConfig
 logging.basicConfig()
 logger = logging.getLogger()
 
+
 class SuperAgent(Agent):
     def __init__(
             self,
@@ -78,7 +79,7 @@ class SuperAgent(Agent):
              generator=None,
              tracker_store=None,
              action_endpoint=None,
-             rules_file=None,
+             rules=None,
              create_dispatcher=None,
              create_nlg=None):
         # type: (Text, Any, Optional[TrackerStore]) -> Agent
@@ -134,6 +135,7 @@ class SuperAgent(Agent):
                                                create_dispatcher=self.create_dispatcher,
                                                rules_file=self.rules_file)
         return self.processor
+
 
 class SuperMessageProcessor(MessageProcessor):
     def __init__(self,
