@@ -13,6 +13,8 @@ A set of power tools to 🚀🚀🚀 your productivity with Rasa
 - Filter entities: define entities allowed for each intent
 
 
+## Contents
+
 - [Installation](#installation)
 - [Usage](#usage)
 	- [Validate user input](#validate-user-input)
@@ -202,6 +204,7 @@ agent = SuperAgent.load(POLICY_PATH,
 
 
 You create an intent substitution rule like this:
+
 ```yaml
 intent_substitutions:
 
