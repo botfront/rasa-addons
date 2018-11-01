@@ -2,7 +2,7 @@ import json
 
 import os
 import yaml
-from rasa_addons.domains import DomainsMerger
+from rasa_addons.domains_merger import DomainsMerger
 
 ROOT_PATH = os.path.join(os.getcwd(), 'tests')
 

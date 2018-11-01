@@ -1,6 +1,6 @@
 import yaml
-from rasa_addons.superagent.input_validator import InputValidator
-from rasa_addons.superagent.rules import Rules
+from rasa_addons.input_validation import InputValidator
+from rasa_addons.rules import Rules
 
 VALIDATOR_RULES_YAML = './tests/test_rules.yaml'
 
