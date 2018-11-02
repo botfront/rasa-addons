@@ -4,10 +4,6 @@
 ![PyPI](https://img.shields.io/pypi/v/rasa-addons.svg)
 ![Travis](https://img.shields.io/travis/mrbot-ai/rasa-addons.svg)
 
-## Rasa Core 0.11 Support on the way
-Only automated tests are not working yet. You can have a look and install from https://github.com/mrbot-ai/rasa-addons/tree/rasacore-0.11-support
-
-
 A set of power tools to 🚀🚀🚀 your productivity with Rasa
 
 - Input validation: if you expect Yes or No, make sure your users anser Yes or No
