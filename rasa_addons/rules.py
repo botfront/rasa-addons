@@ -5,7 +5,7 @@ import yaml
 import logging
 import copy
 from rasa_core.events import ActionExecuted
-
+from requests.exceptions import InvalidURL, RequestException
 from rasa_addons.disambiguation import Disambiguator
 from rasa_addons.input_validation import InputValidator, ActionInvalidUtterance
 
@@ -41,7 +41,7 @@ class Rules(object):
 
         # fallback has precedence
         if self.disambiguation_policy.fallback(parse_data, tracker, dispatcher, run_action) or \
-        self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
+                self.disambiguation_policy.disambiguate(parse_data, tracker, dispatcher, run_action):
             return True
 
         self.run_swap_intent_rules(parse_data, tracker)
@@ -147,10 +147,27 @@ class Rules(object):
     @classmethod
     def load_from_remote(cls, endpoint):
         try:
-            rules = endpoint.request(method='get').json()
+            logger.debug("Requesting rules from server {}..."
+                         "".format(endpoint.url))
+            response = endpoint.request(method='get')
+            rules = response.json()
+            if response.status_code == 204:
+                logger.debug("Model server returned 204 status code, indicating "
+                             "that no new model is available. "
+                             "Current fingerprint: {}".format(fingerprint))
+                return response.headers.get("ETag")
+            elif response.status_code == 404:
+                logger.debug("Rules not found")
+                return None
+            elif response.status_code != 200:
+                logger.warning("Tried to fetch rules from server, but server response "
+                               "status code is {}. We'll retry later..."
+                               "".format(response.status_code))
             return Rules(rules)
-        except Exception as e:
-            raise e
+        except RequestException as e:
+            logger.warning("Tried to fetch rules from server, but couldn't reach "
+                           "server. We'll retry later... Error: {}."
+                           "".format(e))
 
     @classmethod
     def load_from_file(cls, rules_file):
@@ -158,5 +175,3 @@ class Rules(object):
             return Rules(Rules._load_yaml(rules_file))
         except Exception as e:
             raise e
-
-
