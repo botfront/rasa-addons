@@ -144,7 +144,7 @@ class SuperAgent(Agent):
                                               agent)
             else:
                 # just pull the rules once
-                agent.rules = SuperAgent.get_rules(rules_server)
+                agent.rules = SuperAgent.get_rules(rules)
 
 
         return agent
