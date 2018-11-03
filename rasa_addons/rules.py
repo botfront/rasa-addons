@@ -153,11 +153,11 @@ class Rules(object):
             rules = response.json()
             if response.status_code == 204:
                 logger.debug("Model server returned 204 status code, indicating "
-                             "that no new model is available. "
+                             "that no new new rules are available. "
                              "Current fingerprint: {}".format(fingerprint))
                 return response.headers.get("ETag")
             elif response.status_code == 404:
-                logger.debug("Rules not found")
+                logger.warning("Tried to fetch rules from got a 404 response")
                 return None
             elif response.status_code != 200:
                 logger.warning("Tried to fetch rules from server, but server response "
