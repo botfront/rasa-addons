@@ -221,7 +221,7 @@ This will change the dialog act to `{intent: "faq", entities: [{intent: "faq.how
 In Core, add this story:
 ```md
 ## FAQ
-* faq
+* faq{"intent":"original_intent"}
   - action_faq
 ```
 
@@ -237,7 +237,7 @@ class ActionFAQ(Action):
          # get the original intent from tracker.latest_message and retrieve the correct answer
 ```
 
-The benefit of this approach is you have only ONE story for all your questions, so if your Q&A are stored externally you don't have to retrain your bot when adding/changing questions. Since you have only one story for potentially 100's of questions, this means you can better handle side questions in more complex dialogs.
+The benefit of this approach is you have only ONE story for all your questions, so if your Q&A are stored externally you don't have to retrain your bot when adding/changing questions. Since you have only one story for potentially 100's of questions, this means you can better handle side questions in more complex dialogs. 
 
 ### Where are automated tests ?
 
