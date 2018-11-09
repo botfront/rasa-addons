@@ -115,27 +115,38 @@ class ActionDisambiguate(Action):
 
     @staticmethod
     def get_disambiguation_message(dispatcher, rule, payloads, intents, tracker):
-        buttons = list(
-            [{"title": dispatcher.nlg.generate(
-                "{}_{}".format(rule["display"]["button_title_template_prefix"], i[0]), 
-                                tracker, dispatcher.output_channel)[
-                "text"], "payload": i[1]} for i in zip(intents, payloads)])
+        buttons = []
+        for intent, payload in zip(intents, payloads):
+            template_key = "{}_{}".format(rule["display"]["button_title_template_prefix"], intent)
+            buttons.append({
+                "title": ActionDisambiguate.generate_title(dispatcher, template_key, tracker),
+                "payload": payload
+            })
 
         if "fallback_button" in rule["display"] and \
-            "title" in rule["display"]["fallback_button"] and \
-            "payload" in rule["display"]["fallback_button"]:
-            buttons.append(
-                {"title": dispatcher.nlg.generate(rule["display"]["fallback_button"]["title"],
-                                                tracker, dispatcher.output_channel)["text"],
-                 "payload": rule["display"]["fallback_button"]["payload"]
-                 })
+                "title" in rule["display"]["fallback_button"] and \
+                "payload" in rule["display"]["fallback_button"]:
+            buttons.append({
+                "title": ActionDisambiguate.generate_title(dispatcher, rule["display"]["fallback_button"]["title"], tracker),
+                "payload": rule["display"]["fallback_button"]["payload"],
+            })
 
         disambiguation_message = {
-            "text": dispatcher.nlg.generate(rule["display"]["text_template"], tracker, dispatcher.output_channel)["text"],
+            "text": ActionDisambiguate.generate_title(dispatcher, rule["display"]["text_template"], tracker),
             "buttons": buttons
         }
 
         return disambiguation_message
+
+    @staticmethod
+    def generate_title(dispatcher, template_key, tracker):
+        template = dispatcher.nlg.generate(template_key, tracker, dispatcher.output_channel)
+        if isinstance(template, list):
+            assert len(template), 'expected list to be populated with at least one element'
+            template = template[0]
+
+        assert isinstance(template, dict), 'template should be converted to a dict object'
+        return template["text"]
 
     def run(self, dispatcher, tracker, domain):
         if "intro_template" in self.rule["display"]:
