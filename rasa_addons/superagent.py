@@ -8,7 +8,6 @@ from rasa_core.policies.ensemble import PolicyEnsemble
 from rasa_core.events import UserUttered
 from rasa_core.processor import MessageProcessor
 from rasa_core.dispatcher import Dispatcher
-from rasa_addons.disambiguation import ActionDisambiguate
 from rasa_addons.rules import Rules
 from rasa_core.utils import EndpointConfig
 from threading import Thread
@@ -146,10 +145,7 @@ class SuperAgent(Agent):
                 # just pull the rules once
                 agent.rules = SuperAgent.get_rules(rules)
 
-
         return agent
-
-
 
     def create_processor(self, preprocessor=None):
         # type: (Callable[[Text], Text]) -> MessageProcessor
@@ -273,6 +269,7 @@ def start_rules_pulling_in_worker(rules_server, wait_time_between_pulls, agent):
                     args=(rules_server, wait_time_between_pulls, agent))
     worker.setDaemon(True)
     worker.start()
+
 
 def _run_rules_pulling_worker(rules_server, wait_time_between_pulls, agent):
     # type: (EndpointConfig, int, Agent) -> None
