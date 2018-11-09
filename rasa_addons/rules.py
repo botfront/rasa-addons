@@ -150,20 +150,22 @@ class Rules(object):
             logger.debug("Requesting rules from server {}..."
                          "".format(endpoint.url))
             response = endpoint.request(method='get')
-            rules = response.json()
-            if response.status_code == 204:
-                logger.debug("Model server returned 204 status code, indicating "
-                             "that no new new rules are available. "
-                             "Current fingerprint: {}".format(fingerprint))
-                return response.headers.get("ETag")
+
+            if response.status_code in [204,304] :
+                logger.debug("Model server returned {} status code, indicating "
+                             "that no new rules are available.".format(response.status_code))
+                return None
             elif response.status_code == 404:
-                logger.warning("Tried to fetch rules from got a 404 response")
+                logger.warning("Tried to fetch rules from server but got a 404 response")
                 return None
             elif response.status_code != 200:
                 logger.warning("Tried to fetch rules from server, but server response "
                                "status code is {}. We'll retry later..."
                                "".format(response.status_code))
-            return Rules(rules)
+            else:
+                rules = response.json()
+                return Rules(rules)
+
         except RequestException as e:
             logger.warning("Tried to fetch rules from server, but couldn't reach "
                            "server. We'll retry later... Error: {}."
