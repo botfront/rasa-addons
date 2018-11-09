@@ -151,7 +151,7 @@ class Rules(object):
                          "".format(endpoint.url))
             response = endpoint.request(method='get')
 
-            if response.status_code in [204,304] :
+            if response.status_code in [204, 304]:
                 logger.debug("Model server returned {} status code, indicating "
                              "that no new rules are available.".format(response.status_code))
                 return None
