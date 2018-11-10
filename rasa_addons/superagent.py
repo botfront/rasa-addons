@@ -1,6 +1,6 @@
 import os
 import logging
-from rasa_core.agent import Agent
+from rasa_core.agent import Agent, start_model_pulling_in_worker, _update_model_from_server
 from rasa_core.domain import TemplateDomain
 from rasa_core.interpreter import NaturalLanguageInterpreter
 from rasa_core.nlg import NaturalLanguageGenerator
@@ -8,10 +8,10 @@ from rasa_core.policies.ensemble import PolicyEnsemble
 from rasa_core.events import UserUttered
 from rasa_core.processor import MessageProcessor
 from rasa_core.dispatcher import Dispatcher
-from rasa_addons.disambiguation import ActionDisambiguate
 from rasa_addons.rules import Rules
 from rasa_core.utils import EndpointConfig
-
+from threading import Thread
+import time
 logging.basicConfig()
 logger = logging.getLogger()
 
@@ -34,7 +34,7 @@ class SuperAgent(Agent):
         self.create_dispatcher = create_dispatcher
         self.create_nlg = create_nlg
 
-        self.rules = self.get_rules(rules)
+        self.rules = None
         # Initializing variables with the passed parameters.
         self.domain = self._create_domain(domain)
         self.policy_ensemble = self._create_ensemble(policies)
@@ -59,7 +59,8 @@ class SuperAgent(Agent):
 
         self._set_fingerprint(fingerprint)
 
-    def get_rules(self, rules_source):
+    @staticmethod
+    def get_rules(rules_source):
         if isinstance(rules_source, EndpointConfig):
             return Rules.load_from_remote(rules_source)
         elif isinstance(rules_source, str):
@@ -69,6 +70,8 @@ class SuperAgent(Agent):
                              'returns rules in a JSON format')
         else:
             return None
+
+
 
     @classmethod
     def load(cls,
@@ -81,10 +84,12 @@ class SuperAgent(Agent):
              action_endpoint=None,
              rules=None,
              create_dispatcher=None,
+             model_server=None,  # type: Optional[EndpointConfig]
+             wait_time_between_pulls=None,  # type: Optional[int]
              create_nlg=None):
         # type: (Text, Any, Optional[TrackerStore]) -> Agent
 
-        if not path:
+        if not path and not domain:
             raise ValueError("You need to provide a valid directory where "
                              "to load the agent from when calling "
                              "`Agent.load`.")
@@ -108,7 +113,8 @@ class SuperAgent(Agent):
         #
         # _interpreter = NaturalLanguageInterpreter.create(interpreter)
         # _tracker_store = cls.create_tracker_store(tracker_store, domain)
-        return cls(
+
+        agent = cls(
                 domain=domain,
                 policies=policies,
                 interpreter=interpreter,
@@ -119,6 +125,27 @@ class SuperAgent(Agent):
                 create_dispatcher=create_dispatcher,
                 create_nlg=create_nlg
         )
+        if model_server:
+            if wait_time_between_pulls:
+                # continuously pull the model every `wait_time_between_pulls` seconds
+                start_model_pulling_in_worker(model_server,
+                                              wait_time_between_pulls,
+                                              agent)
+            else:
+                # just pull the model once
+                _update_model_from_server(model_server, agent)
+
+        if rules and isinstance(rules, EndpointConfig):
+            if wait_time_between_pulls:
+                # continuously pull the rules every `wait_time_between_pulls` seconds
+                start_rules_pulling_in_worker(rules,
+                                              wait_time_between_pulls,
+                                              agent)
+            else:
+                # just pull the rules once
+                agent.rules = SuperAgent.get_rules(rules)
+
+        return agent
 
     def create_processor(self, preprocessor=None):
         # type: (Callable[[Text], Text]) -> MessageProcessor
@@ -133,7 +160,7 @@ class SuperAgent(Agent):
                                                message_preprocessor=preprocessor,
                                                action_endpoint=self.action_endpoint,
                                                create_dispatcher=self.create_dispatcher,
-                                               rules_file=self.rules_file)
+                                               rules=self.rules)
         return self.processor
 
 
@@ -149,7 +176,7 @@ class SuperMessageProcessor(MessageProcessor):
                  message_preprocessor=None,  # type: Optional[LambdaType]
                  on_circuit_break=None,  # type: Optional[LambdaType]
                  create_dispatcher=None,  # type: Optional[LambdaType]
-                 rules_file=None  # type: Optional[str]
+                 rules=None  # type: Optional[Rules]
                  ):
 
         self.rules = rules
@@ -234,3 +261,18 @@ class SuperMessageProcessor(MessageProcessor):
                 # call a registered callback
                 self.on_circuit_break(tracker, dispatcher)
 
+
+def start_rules_pulling_in_worker(rules_server, wait_time_between_pulls, agent):
+    # type: (EndpointConfig, int, Agent) -> None
+
+    worker = Thread(target=_run_rules_pulling_worker,
+                    args=(rules_server, wait_time_between_pulls, agent))
+    worker.setDaemon(True)
+    worker.start()
+
+
+def _run_rules_pulling_worker(rules_server, wait_time_between_pulls, agent):
+    # type: (EndpointConfig, int, Agent) -> None
+    while True:
+        agent.rules = SuperAgent.get_rules(rules_server)
+        time.sleep(wait_time_between_pulls)
