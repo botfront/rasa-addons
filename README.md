@@ -109,8 +109,9 @@ It's also possible to exclude certain intents from being displayed as a disambig
 disambiguation_policy:
   trigger: $0 < 2 * $1
   max_suggestions: 2
+  slot_name: parse_data # optional slot name to store the parse data originating a disambiguation
   display:
-    intro_template: utter_disamb_intro
+    intro_template: utter_disamb_intro # optional: will not be rendered if not set
     text_template: utter_disamb_text
     button_title_template_prefix: utter_disamb
     fallback_button:
@@ -121,7 +122,10 @@ disambiguation_policy:
       - basics\..*
       - cancel
 ```
-Note about the trigger: `$0` corresponds to `parse_data['intent_ranking'][0]["confidence"]`. You can set any rule based on intent ranking. Intent scores are checked against the trigger before any intent is excluded with `exclude`.
+
+**Notes:**
+- `trigger`: `$0` corresponds to `parse_data['intent_ranking'][0]["confidence"]`. You can set any rule based on intent ranking. Intent scores are checked against the trigger before any intent is excluded with `exclude`.
+- `slot_name`: you need to set the slot in the Core domain to get it from the tracker. E.g. `tracker.get_slot(slot_name)`
 
 #### Fallback policy
 
@@ -136,6 +140,7 @@ The bot will utter:
 ```yaml
 fallback_policy:
   trigger: $0 < 0.5
+  slot_name: parse_data # optional slot name to store the parse data originating a disambiguation
   display:
     text: utter_fallback_intro
     buttons:
