@@ -1,11 +1,12 @@
-import io
-import re
-import requests
-import yaml
-import logging
 import copy
+import io
+import logging
+import re
+
+import yaml
 from rasa_core.events import ActionExecuted
-from requests.exceptions import InvalidURL, RequestException
+from requests.exceptions import RequestException
+
 from rasa_addons.disambiguation import Disambiguator
 from rasa_addons.input_validation import InputValidator, ActionInvalidUtterance
 
@@ -174,6 +175,7 @@ class Rules(object):
     @classmethod
     def load_from_file(cls, rules_file):
         try:
+            logger.debug('Loading rules from the {} file'.format(rules_file))
             return Rules(Rules._load_yaml(rules_file))
         except Exception as e:
             raise e

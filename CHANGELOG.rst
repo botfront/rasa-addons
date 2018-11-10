@@ -20,6 +20,7 @@ Removed
 Added
 -----
 - Fetch rules from server
+- Optional slot containing parse_data in disambiguation and fallback policy
 
 Changed
 -------
