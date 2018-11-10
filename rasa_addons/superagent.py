@@ -135,16 +135,15 @@ class SuperAgent(Agent):
                 # just pull the model once
                 _update_model_from_server(model_server, agent)
 
-        if rules and isinstance(rules, EndpointConfig):
-            if wait_time_between_pulls:
+        if rules:
+            # This will load or fetch the rules
+            agent.rules = SuperAgent.get_rules(rules)
+            # Start worker if `wait_time_between_pulls` is set
+            if isinstance(rules, EndpointConfig) and wait_time_between_pulls:
                 # continuously pull the rules every `wait_time_between_pulls` seconds
                 start_rules_pulling_in_worker(rules,
                                               wait_time_between_pulls,
                                               agent)
-            else:
-                # just pull the rules once
-                agent.rules = SuperAgent.get_rules(rules)
-
         return agent
 
     def create_processor(self, preprocessor=None):
