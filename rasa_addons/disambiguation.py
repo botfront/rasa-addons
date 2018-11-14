@@ -176,9 +176,12 @@ class ActionDisambiguate(Action):
 
         disambiguation_message = self.get_disambiguation_message(dispatcher, self.rule, self.payloads, self.intents,
                                                                  tracker)
-
         dispatcher.utter_response(disambiguation_message)
-        return [Restarted()]
+
+        return_value = []
+        if self.rule['slot_name']:
+            return_value.append(SlotSet(self.rule['slot_name'], self.rule['parse_data']))
+        return return_value
 
     def name(self):
         return 'action_disambiguate'
@@ -203,9 +206,12 @@ class ActionFallback(Action):
 
     def run(self, dispatcher, tracker, domain):
         fallback_message = self.get_fallback_message(dispatcher, self.rule, tracker)
-
         dispatcher.utter_response(fallback_message)
-        return [Restarted()]
+
+        return_value = []
+        if self.rule['slot_name']:
+            return_value.append(SlotSet(self.rule['slot_name'], self.rule['parse_data']))
+        return return_value
 
     def name(self):
         return 'action_fallback'
