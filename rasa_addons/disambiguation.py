@@ -113,6 +113,7 @@ class Disambiguator(object):
 
         if should_disambiguate:
             intents = self.get_intent_names(parse_data)
+            self.disamb_rule['parse_data'] = parse_data
             action = ActionDisambiguate(self.disamb_rule, self.get_payloads(parse_data, intents), intents)
             run_action(action, tracker, dispatcher)
             return True
@@ -121,6 +122,7 @@ class Disambiguator(object):
         should_fallback = self.should_fallback(parse_data)
 
         if should_fallback:
+            self.fallback_rule['parse_data'] = parse_data
             action = ActionFallback(self.fallback_rule)
             run_action(action, tracker, dispatcher)
             return True
