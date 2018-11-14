@@ -19,6 +19,8 @@ A set of power tools to 🚀🚀🚀 your productivity with Rasa
 	- [Validate user input](#validate-user-input)
 	- [Disambiguate user input and fallback](#disambiguate-user-input-and-fallback)
 		- [Disambiguation policy](#disambiguation-policy)
+		    - [Suggestions](#suggestions)
+		    - [Rephrasing](#rephrasing)
 		- [Fallback policy](#fallback-policy)
 		- [Using both disambiguation and fallback policies](#using-both-disambiguation-and-fallback-policies)
 	- [Substitute intents](#substitute-intents)
