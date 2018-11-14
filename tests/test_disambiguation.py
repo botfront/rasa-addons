@@ -1,11 +1,9 @@
 import os
 import pytest
 from rasa_addons.disambiguation import Disambiguator, ActionDisambiguate, ActionFallback
-from rasa_addons.rules import Rules
 from rasa_addons.utils import load_yaml
 from schema import SchemaError
 from rasa_addons.tests import TestNLG as StubNLG
-
 
 ROOT_PATH = os.path.join(os.getcwd(), 'tests')
 
@@ -16,12 +14,15 @@ class StubDispatcher(object):
         self.nlg = StubNLG(None)
         self.output_channel = None
 
+
 class StubTracker(object):
     pass
+
 
 tracker = StubTracker()
 
 """disambiguation-only tests"""
+
 
 def test_disamb_trigger_wrong_format():
     with pytest.raises(SchemaError) as e:
@@ -36,6 +37,7 @@ def test_disamb_trigger1():
     }
     result = disambiguator.should_disambiguate(parse_data)
     assert result is True
+
 
 def test_disamb_trigger2():
     disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator2.yaml')['disambiguation_policy'])
@@ -64,6 +66,32 @@ def test_disamb_buttons_with_fallback():
             "payload": "/intentB"
         }, {
             "title": "utter_fallback",
+            "payload": "/fallback"
+        }]
+    }
+
+    dispatcher = StubDispatcher()
+    intents = disambiguator.get_intent_names(parse_data)
+    assert ActionDisambiguate.get_disambiguation_message(dispatcher, disambiguator.disamb_rule,
+                                                         disambiguator.get_payloads(parse_data, intents),
+                                                         intents,
+                                                         tracker) == expected
+
+
+def test_rephrase():
+    disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator12.yaml')['disambiguation_policy'])
+
+    parse_data = {
+        "intent_ranking": [{"name": "intentA", "confidence": 0.6}, {"name": "intentB", "confidence": 0.2}]
+    }
+
+    expected = {
+        "text": "utter_rephrase",
+        "buttons": [{
+            "title": "utter_yes",
+            "payload": "/intentA"
+        }, {
+            "title": "utter_no",
             "payload": "/fallback"
         }]
     }
@@ -136,6 +164,7 @@ def test_disamb_does_not_trigger_when_data_is_missing_in_parse_data():
     }
     assert disambiguator.should_disambiguate(parse_data) is False
 
+
 def test_disamb_does_not_trigger_when_intent_is_null():
     disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator4.yaml')['disambiguation_policy'])
 
@@ -149,6 +178,7 @@ def test_disamb_does_not_trigger_when_intent_is_null():
     }
 
     assert disambiguator.should_disambiguate(parse_data) is False
+
 
 def test_disamb_exclude_exact():
     disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator10.yaml')['disambiguation_policy'])
@@ -177,6 +207,7 @@ def test_disamb_exclude_exact():
                                                          disambiguator.get_payloads(parse_data, intents),
                                                          intents,
                                                          tracker) == expected
+
 
 def test_disamb_exclude_regex():
     disambiguator = Disambiguator(disamb_rule=load_yaml('./tests/disambiguator/test_disambiguator11.yaml')['disambiguation_policy'])
@@ -211,7 +242,9 @@ def test_disamb_exclude_regex():
                                                          intents,
                                                          tracker) == expected
 
+
 """fallback-only tests"""
+
 
 def test_fallback_trigger_wrong_format():
     with pytest.raises(SchemaError) as e:
@@ -258,6 +291,7 @@ def test_fallback_buttons_with_fallback():
     dispatcher = StubDispatcher()
     assert ActionFallback.get_fallback_message(dispatcher, disambiguator.fallback_rule, tracker) == expected
 
+
 def test_fallback_buttons_without_fallback():
     disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['fallback_policy'])
 
@@ -280,6 +314,7 @@ def test_fallback_does_not_trigger_when_data_is_missing_in_parse_data():
 
     }
     assert disambiguator.should_fallback(parse_data) is False
+
 
 def test_fallback_does_not_trigger_when_intent_is_null():
     disambiguator = Disambiguator(fallback_rule=load_yaml('./tests/disambiguator/test_disambiguator7.yaml')['fallback_policy'])
@@ -316,6 +351,7 @@ def test_disamb_and_fallback_trigger_any1():
     result = disambiguator.should_fallback(parse_data) or disambiguator.should_disambiguate(parse_data)
     assert result is True
 
+
 def test_disamb_and_fallback_trigger_any2():
     rules = load_yaml('./tests/disambiguator/test_disambiguator9.yaml')
     disambiguator = Disambiguator(disamb_rule=rules['disambiguation_policy'],
@@ -339,6 +375,7 @@ def test_disamb_and_fallback_trigger_both():
     # fallback has precedence and short-circuits disamb in the actual program flow as per rules.py
     result = disambiguator.should_fallback(parse_data) and disambiguator.should_disambiguate(parse_data)
     assert result is True
+
 
 def test_disamb_and_fallback_trigger_none():
     rules = load_yaml('./tests/disambiguator/test_disambiguator9.yaml')
