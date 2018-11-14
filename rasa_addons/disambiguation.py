@@ -2,7 +2,7 @@ import json
 import re
 from schema import Schema, And, Optional
 from rasa_core.actions.action import Action
-from rasa_core.events import Restarted
+from rasa_core.events import SlotSet
 
 
 class Disambiguator(object):
@@ -60,9 +60,10 @@ class Disambiguator(object):
                 self.disamb_rule = self.rephrase_schema.validate(disamb_rule)
             else:
                 self.disamb_rule = self.disamb_schema.validate(disamb_rule)
+        else:
+            self.disamb_rule = None
 
-        if fallback_rule:
-            self.fallback_rule = self.fallback_schema.validate(fallback_rule)
+        self.fallback_rule = self.fallback_schema.validate(fallback_rule) if fallback_rule else None
 
     @staticmethod
     def is_triggered(parse_data, trigger):
@@ -139,7 +140,14 @@ class ActionDisambiguate(Action):
     def get_disambiguation_message(dispatcher, rule, payloads, intents, tracker):
 
         def generate(template_name):
-            return dispatcher.nlg.generate(template_name, tracker, dispatcher.output_channel)["text"]
+            print('test')
+            templates = dispatcher.nlg.generate(template_name, tracker, dispatcher.output_channel)
+            if isinstance(templates, dict):
+                return templates["text"]
+            elif isinstance(templates, list) and len(templates):
+                return templates[0]["text"]
+
+            raise TypeError('templates must be a dictionary or a non-empty list')
 
         if rule["type"] == 'suggest':
             buttons = list(
@@ -162,7 +170,7 @@ class ActionDisambiguate(Action):
 
         else:
             disambiguation_message = {
-                "text": generate(rule["display"]["rephrase_template"]),
+                "text": generate("{}_{}".format(rule["display"]["rephrase_template"], intents[0])),
                 "buttons": [
                     {"title": generate(rule["display"]["yes_template"]), "payload": payloads[0]},
                     {"title": generate(rule["display"]["no_template"]),
