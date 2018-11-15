@@ -67,8 +67,10 @@ class Disambiguator(object):
 
     @staticmethod
     def is_triggered(parse_data, trigger):
+        # pattern to match $0, $1, $2, ... and returning 0, 1, 2,... in match groups
         pattern = re.compile(r"\$(\d)")
         eval_string = trigger
+        # matches: an array of intents indices to consider in intent_ranking
         matches = re.findall(pattern, trigger)
         for i in matches:
             # if not enough intents in ranking to apply the rule, policy rule can't be triggered
