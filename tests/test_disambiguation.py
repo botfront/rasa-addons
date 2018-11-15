@@ -86,7 +86,7 @@ def test_rephrase():
     }
 
     expected = {
-        "text": "utter_rephrase",
+        "text": "utter_rephrase_intentA",
         "buttons": [{
             "title": "utter_yes",
             "payload": "/intentA"
