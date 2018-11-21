@@ -136,14 +136,15 @@ class SuperAgent(Agent):
                 _update_model_from_server(model_server, agent)
 
         if rules:
-            # This will load or fetch the rules
-            agent.rules = SuperAgent.get_rules(rules)
             # Start worker if `wait_time_between_pulls` is set
             if isinstance(rules, EndpointConfig) and wait_time_between_pulls:
                 # continuously pull the rules every `wait_time_between_pulls` seconds
                 start_rules_pulling_in_worker(rules,
                                               wait_time_between_pulls,
                                               agent)
+            # In all other cases we only want to load the rules once
+            else:
+                agent.rules = SuperAgent.get_rules(rules)
         return agent
 
     def create_processor(self, preprocessor=None):
@@ -273,5 +274,9 @@ def start_rules_pulling_in_worker(rules_server, wait_time_between_pulls, agent):
 def _run_rules_pulling_worker(rules_server, wait_time_between_pulls, agent):
     # type: (EndpointConfig, int, Agent) -> None
     while True:
-        agent.rules = SuperAgent.get_rules(rules_server)
-        time.sleep(wait_time_between_pulls)
+        try:
+            agent.rules = SuperAgent.get_rules(rules_server)
+        except Exception as e:
+            logger.warning("Failed pulling rules from server: {}".format(e))
+        finally:
+            time.sleep(wait_time_between_pulls)

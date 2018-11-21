@@ -19,6 +19,8 @@ A set of power tools to 🚀🚀🚀 your productivity with Rasa
 	- [Validate user input](#validate-user-input)
 	- [Disambiguate user input and fallback](#disambiguate-user-input-and-fallback)
 		- [Disambiguation policy](#disambiguation-policy)
+		    - [Suggestions](#suggestions)
+		    - [Rephrasing](#rephrasing)
 		- [Fallback policy](#fallback-policy)
 		- [Using both disambiguation and fallback policies](#using-both-disambiguation-and-fallback-policies)
 	- [Substitute intents](#substitute-intents)
@@ -90,9 +92,12 @@ Rules are enforced at the tracker level, so there is no need to retrain when cha
 
 #### Disambiguation policy
 
-Help your users when your NLU struggles to identify the right intent. Instead of just going with the highest scoring intent
-you can ask the user to pick from a list of likely intents.
+Help your users when your NLU struggles to identify the right intent. Instead of just going with the highest scoring intent or just going with a fallback
+you can ask the user to confirm the question or to pick from a list of likely intents.
 
+##### Suggestions
+
+One way to disambiguate is to provide the user with buttons, each button corresponding to one intent. 
 In the example below, the disambiguation is triggered when the score of the highest scoring intent is below twice the score of the second highest scoring intent.
 
 The bot will utter:
@@ -108,6 +113,7 @@ It's also possible to exclude certain intents from being displayed as a disambig
 ```yaml
 disambiguation_policy:
   trigger: $0 < 2 * $1
+  type: suggest
   max_suggestions: 2
   slot_name: parse_data # optional slot name to store the parse data originating a disambiguation
   display:
@@ -125,17 +131,33 @@ disambiguation_policy:
 
 **Notes:**
 - `trigger`: `$0` corresponds to `parse_data['intent_ranking'][0]["confidence"]`. You can set any rule based on intent ranking. Intent scores are checked against the trigger before any intent is excluded with `exclude`.
-- `slot_name`: you need to set the slot in the Core domain to get it from the tracker. E.g. `tracker.get_slot(slot_name)`
-
-#### Fallback policy
-
-You may want to make the bot go straight to suggesting fallback (e.g when the top intent ranking is low).
-
-In the example below, fallback is triggered when the top scoring intent's confidence is below 0.5.
+- `slot_name`: you need to set the slot in the Core domain to get it from the tracker. E.g. `tracker.get_slot(slot_name)`You may want to make the bot go straight to suggesting fallback (e.g when the top intent ranking is low).
 
 The bot will utter:
 1. An intro message `utter_fallback_intro`
 2. Optional buttons (if `buttons` list with at least one item - a pair of `title` and `payload` - is defined).
+
+#### Rephrasing
+Another way to disambiguate is to rephrase. When triggered, the bot asks "Did you mean [something related to the intent]"? followed by two buttons (titles in `yes_template` and `no_template`).
+`no_payload` is the payload to trigger when the user clicks the no button.
+
+```yaml
+disambiguation_policy:
+  trigger: $0 < 2 * $1
+  type: rephrase
+  display:
+    rephrase_template: utter_rephrase
+    yes_template: utter_yes
+    no_template: utter_no
+    no_payload: /fallback
+    exclude:
+      - chitchat\..*
+      - basics\..*
+      - cancel
+```
+      
+#### Fallback policy
+In the example below, fallback is triggered when the top scoring intent's confidence is below 0.5.
 
 ```yaml
 fallback_policy:

@@ -1,9 +1,8 @@
 import json
 import re
-
+from schema import Schema, And, Optional
 from rasa_core.actions.action import Action
 from rasa_core.events import SlotSet
-from schema import Schema, And, Optional
 
 
 class Disambiguator(object):
@@ -11,6 +10,7 @@ class Disambiguator(object):
 
         self.disamb_schema = Schema({
             "trigger": And(str, len),
+            "type": "suggest",
             Optional("max_suggestions", default=2): int,
             Optional("slot_name"): str,
             "display": {
@@ -24,9 +24,22 @@ class Disambiguator(object):
                 Optional("exclude", default=[]): list
             }
         })
+
+        self.rephrase_schema = Schema({
+            "trigger": And(str, len),
+            "type": "rephrase",
+            Optional("slot_name"): str,
+            "display": {
+                "rephrase_template": And(str, len),
+                "yes_template": And(str, len),
+                "no_template": And(str, len),
+                "no_payload": And(str, len),
+                Optional("exclude", default=[]): list,
+            }
+        })
+
         self.fallback_schema = Schema({
             "trigger": And(str, len),
-            Optional("slot_name"): str,
             "display": {
                 "text": And(str, len),
                 Optional("buttons"):
@@ -34,27 +47,30 @@ class Disambiguator(object):
                       "payload": And(str, len, error="button title is required")}]
             }
         })
+
         if disamb_rule:
-            self.disamb_schema.validate(disamb_rule)
-        if fallback_rule:
-            self.fallback_schema.validate(fallback_rule)
+            # avoid breaking change
+            if 'type' not in disamb_rule:
+                disamb_rule['type'] = 'suggest'
 
-        self.disamb_rule = disamb_rule
-        self.fallback_rule = fallback_rule
+            if 'type' not in disamb_rule or disamb_rule['type'] not in ['suggest', 'rephrase']:
+                raise ValueError('type must be either \'suggest\' or \'rephrase\'')
 
-        if self.disamb_rule and "max_suggestion" not in self.disamb_rule:
-            self.disamb_rule["max_suggestions"] = 2
+            if disamb_rule['type'] == 'rephrase':
+                self.disamb_rule = self.rephrase_schema.validate(disamb_rule)
+            else:
+                self.disamb_rule = self.disamb_schema.validate(disamb_rule)
+        else:
+            self.disamb_rule = None
 
-        if self.disamb_rule and "exclude" not in self.disamb_rule["display"]:
-            self.disamb_rule["display"]["exclude"] = []
-
-        if self.disamb_rule and "button_title_template_prefix" not in self.disamb_rule["display"]:
-            self.disamb_rule["display"]["button_title_template_prefix"] = "utter_disamb"
+        self.fallback_rule = self.fallback_schema.validate(fallback_rule) if fallback_rule else None
 
     @staticmethod
     def is_triggered(parse_data, trigger):
+        # pattern to match $0, $1, $2, ... and returning 0, 1, 2,... in match groups
         pattern = re.compile(r"\$(\d)")
         eval_string = trigger
+        # matches: an array of intents indices to consider in intent_ranking
         matches = re.findall(pattern, trigger)
         for i in matches:
             # if not enough intents in ranking to apply the rule, policy rule can't be triggered
@@ -90,7 +106,10 @@ class Disambiguator(object):
         intent_names = list(map(lambda x: x["name"], parse_data["intent_ranking"]))
         if self.disamb_rule["display"]["exclude"]:
             intent_names = list(filter(lambda x: not self.should_exclude(x), intent_names))
-        return intent_names[:self.disamb_rule["max_suggestions"]]
+        if self.disamb_rule["type"] == "suggest":
+            return intent_names[:self.disamb_rule["max_suggestions"]]
+        else:
+            return intent_names[:1]
 
     def disambiguate(self, parse_data, tracker, dispatcher, run_action):
         should_disambiguate = self.should_disambiguate(parse_data)
@@ -121,39 +140,47 @@ class ActionDisambiguate(Action):
 
     @staticmethod
     def get_disambiguation_message(dispatcher, rule, payloads, intents, tracker):
-        buttons = []
-        for intent, payload in zip(intents, payloads):
-            template_key = "{}_{}".format(rule["display"]["button_title_template_prefix"], intent)
-            buttons.append({
-                "title": ActionDisambiguate.generate_title(dispatcher, template_key, tracker),
-                "payload": payload
-            })
 
-        if "fallback_button" in rule["display"] and \
-                "title" in rule["display"]["fallback_button"] and \
-                "payload" in rule["display"]["fallback_button"]:
-            buttons.append({
-                "title": ActionDisambiguate.generate_title(dispatcher, rule["display"]["fallback_button"]["title"],
-                                                           tracker),
-                "payload": rule["display"]["fallback_button"]["payload"],
-            })
+        def generate(template_name):
+            print('test')
+            templates = dispatcher.nlg.generate(template_name, tracker, dispatcher.output_channel)
+            if isinstance(templates, dict):
+                return templates["text"]
+            elif isinstance(templates, list) and len(templates):
+                return templates[0]["text"]
 
-        disambiguation_message = {
-            "text": ActionDisambiguate.generate_title(dispatcher, rule["display"]["text_template"], tracker),
-            "buttons": buttons
-        }
+            raise TypeError('templates must be a dictionary or a non-empty list')
+
+        if rule["type"] == 'suggest':
+            buttons = list(
+                [{"title": generate("{}_{}".format(rule["display"]["button_title_template_prefix"], i[0])),
+                  "payload": i[1]} for i in zip(intents, payloads)])
+
+            if "fallback_button" in rule["display"] and \
+                    "title" in rule["display"]["fallback_button"] and \
+                    "payload" in rule["display"]["fallback_button"]:
+                buttons.append({
+                    "title": generate(rule["display"]["fallback_button"]["title"]),
+                    "payload": rule["display"]["fallback_button"]["payload"]
+                })
+
+            disambiguation_message = {
+                "text": generate(rule["display"]["text_template"]),
+                "buttons": buttons
+            }
+
+
+        else:
+            disambiguation_message = {
+                "text": generate("{}_{}".format(rule["display"]["rephrase_template"], intents[0])),
+                "buttons": [
+                    {"title": generate(rule["display"]["yes_template"]), "payload": payloads[0]},
+                    {"title": generate(rule["display"]["no_template"]),
+                     "payload": rule["display"]["no_payload"]}
+                ]
+            }
 
         return disambiguation_message
-
-    @staticmethod
-    def generate_title(dispatcher, template_key, tracker):
-        template = dispatcher.nlg.generate(template_key, tracker, dispatcher.output_channel)
-        if isinstance(template, list):
-            assert len(template), 'expected list to be populated with at least one element'
-            template = template[0]
-
-        assert isinstance(template, dict), 'template should be converted to a dict object'
-        return template["text"]
 
     def run(self, dispatcher, tracker, domain):
         if "intro_template" in self.rule["display"]:
