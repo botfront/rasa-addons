@@ -6,125 +6,72 @@ from rasa_core.channels import InputChannel, OutputChannel, HttpInputChannel, Us
 logger = logging.getLogger(__name__)
 
 
-class WebchatBot(OutputChannel):
+class SocketOutputChatBot(SocketIOOutput):
+    @classmethod
+    def name(cls):
+        return 'webchat'
 
-    def __init__(self):
-        self.custom_data = {}
 
-    def send(self, recipient_id, message):
-        # type: (Text, Any) -> None
-        """Sends a message to the recipient."""
-        emit(message, room=recipient_id)
-
-    def send_text_message(self, recipient_id, message):
+class SocketInputChatBot(SocketIOInput):
+    def __init__(self, static_assets_path=None, index='index.html', socketio_path='/socket.io'):
         # type: (Text, Text) -> None
-        """Send a message through this channel."""
-
-        logger.info("Sending message: " + message)
-        emit('bot_uttered', {"text": message}, room=recipient_id)
-
-    def send_image_url(self, recipient_id, image_url):
-        # type: (Text, Text) -> None
-        """Sends an image. Default will just post the url as a string."""
-        message = {"attachment": {
-            "type": "image",
-            "payload": {
-                # "title": "generic", commented because it's supported, but standard rasa dispatcher only sends the url for now
-                "src": image_url
-            }}}
-        emit('bot_uttered', message, room=recipient_id)
-
-    def send_text_with_buttons(self, recipient_id, text, buttons, **kwargs):
-        # type: (Text, Text, List[Dict[Text, Any]], **Any) -> None
-        """Sends buttons to the output."""
-
-        message = {
-            "text": text,
-            "quick_replies": []
-        }
-
-        for button in buttons:
-            message["quick_replies"].append({
-                    "content_type": "text",
-                    "title": button['title'],
-                    "payload": button['payload']
-                })
-
-        emit('bot_uttered', message, room=recipient_id)
-
-    def send_custom_message(self, recipient_id, elements):
-        # type: (Text, List[Dict[Text, Any]]) -> None
-        """Sends elements to the output."""
-
-        message = {"attachment": {
-            "type": "template",
-            "payload": {
-                "template_type": "generic",
-                "elements": elements[0]
-            }}}
-
-        emit('bot_uttered', message, room=recipient_id)
-
-
-class WebChatInput(InputChannel):
-    """Webchat input channel implementation. Based on the HTTPInputChannel."""
-
-    def __init__(self, static_assets_path=None, index='index.html'):
-        # type: (Text, Text) -> None
-
+        
         self.static_assets_path = static_assets_path
         self.index = index
+        
+        super(SocketInputChatBot, self).__init__(socketio_path=socketio_path)
+
+    @classmethod
+    def name(cls):
+        return 'webchat'
 
     def blueprint(self, on_new_message):
+        sio = socketio.Server()
+        name = SocketInputChatBot.name()
+        socketio_webhook = SocketBlueprint(sio, self.socketio_path, name, __name__,
+                                           url_prefix=SocketInputChatBot.name(),
+                                           static_folder=self.static_assets_path,
+                                           static_url_path='/{}'.format(name))
 
-        web_chat_webhook = Blueprint('web_chat_webhook', __name__)
-
-        @web_chat_webhook.route('/health')
-        def health():
-            return jsonify({"status": "ok"})
-
+        # send view if static_assets are present
         if self.static_assets_path is not None and self.index is not None:
-            @web_chat_webhook.route('/<path:path>')
+            @socketio_webhook.route('/<path:path>')
             def send_path(path):
                 return send_from_directory(self.static_assets_path, path)
 
-            @web_chat_webhook.route("/", methods=['GET'])
+            @socketio_webhook.route('/', methods=['GET'])
             def bot():
                 return send_from_directory(self.static_assets_path, self.index)
 
-        return web_chat_webhook
+        # socket specific endpoints and event handler
+        @socketio_webhook.route('/health', methods=['GET'])
+        def health():
+            return jsonify({'status': 'ok'})
+
+        @sio.on('connect', namespace=self.namespace)
+        def connect(sid, environ):
+            logger.debug('User {} connected to socketio endpoint.'.format(sid))
+
+        @sio.on('disconnect', namespace=self.namespace)
+        def disconnect(sid):
+            logger.debug('User {} disconnected from socketio endpoint.'.format(sid))
+
+        @sio.on(self.user_message_evt, namespace=self.namespace)
+        def handle_message(sid, data):
+            output_channel = SocketOutputChatBot(sio, self.bot_message_evt)
+            message = UserMessage(data['message'], output_channel, sid, input_channel=self.name())
+            on_new_message(message)
+
+        return socketio_webhook
 
 
-class SocketInputChannel(HttpInputChannel):
+''' Can be invoked as follows in RASA Core 0.12.x
 
-    def _record_messages(self, on_message):
-        # type: (Callable[[UserMessage], None]) -> None
-        from flask import Flask
-        from flask_cors import CORS
 
-        app = Flask(__name__)
-        CORS(app)
-        app.config['SECRET_KEY'] = 'secret!'
+        static_asset_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates')
+        webchat = SocketInputChatBot(static_assets_path=static_asset_path)
 
-        for component in self.listener_components:
-            if self._has_root_prefix():
-                app.register_blueprint(component.blueprint(on_message))
-            else:
-                app.register_blueprint(component.blueprint(on_message),
-                                       url_prefix=self.url_prefix)
-
-        socketio = SocketIO(app)
-
-        @socketio.on('connect')
-        def on_connect():
-            pass
-
-        @socketio.on('user_uttered')
-        def handle_message(message):
-            output_channel = WebchatBot()
-            output_channel.custom_data = message['customData']
-            on_message(UserMessage(message['message'], output_channel, request.sid))
-
-        cors = CORS(app, resources={r"*": {"origins": "*"}})  # TODO change that
-
-        socketio.run(app, port=self.http_port, host='0.0.0.0')
+        interpreter = RasaNLUInterpreter('models/nlu/default/current')
+        agent = Agent.load(dir_model_core, interpreter=interpreter)
+        agent.handle_channels([webchat], 5000, serve_forever=True, route='/')
+'''
