@@ -74,6 +74,11 @@ In `rules.yml` you can add input validation rules
 ```yaml
 input_validation:
   - after: utter_when_do_you_want_a_wake_up_call
+    # !!WARNING!! If regex is set true then the validation will trigger for
+    #             all actions which includes the above text. It is encouraged
+    #             to set regex to false for matching the validation to a
+    #             specific action.
+    regex: false # optional (default: True)
     expected:
       - intents:
         - cancel
