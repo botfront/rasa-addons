@@ -103,13 +103,15 @@ class SuperAgent(Agent):
                              "a model, use `agent.load_data(...)` "
                              "instead.".format(path))
 
-        if domain is None:
+        # We don't want to block if the path doesn't exist but a model_server is supplied
+        if domain is None and model_server is None:
             domain = TemplateDomain.load(os.path.join(path, "domain.yml"))
-        if policies is None:
+        if policies is None and model_server is None:
             policies = PolicyEnsemble.load(path)
 
         # ensures the domain hasn't changed between test and train
-        domain.compare_with_specification(path)
+        if model_server is None:
+            domain.compare_with_specification(path)
         #
         # _interpreter = NaturalLanguageInterpreter.create(interpreter)
         # _tracker_store = cls.create_tracker_store(tracker_store, domain)
