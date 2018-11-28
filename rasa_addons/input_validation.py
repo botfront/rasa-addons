@@ -15,7 +15,10 @@ class InputValidator(object):
 
     def find(self, after):
         for rule in self.rules:
-            if re.match(rule['after'], after):
+            if rule.get('regex', True):
+                if re.match(rule['after'], after):
+                    return rule
+            elif rule['after'] == after:
                 return rule
         return None
 

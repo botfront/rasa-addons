@@ -1,5 +1,9 @@
 import os
 import pytest
+
+import sys
+print(sys.path)
+
 from rasa_addons.disambiguation import Disambiguator, ActionDisambiguate, ActionFallback
 from rasa_addons.utils import load_yaml
 from schema import SchemaError
