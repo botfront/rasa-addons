@@ -3,137 +3,79 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import argparse
+import os
+import re
+import uuid
 import glob
 import random
-import uuid
-
-import os
 import logging
+import argparse
 
-from rasa_addons.superagent import SuperAgent
-from rasa_core.actions.action import ActionListen
-from rasa_core.domain import TemplateDomain
-from typing import Text
-import re
-from rasa_core.channels.channel import UserMessage
-from rasa_core.dispatcher import Dispatcher
-from rasa_core.channels.channel import InputChannel, OutputChannel
+import requests
 from rasa_core import utils
-from rasa_core.interpreter import RegexInterpreter
-from rasa_core.nlg import TemplatedNaturalLanguageGenerator
 
-import sys
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 R_TITLE = re.compile('##\s*(.+)')
 R_USER = re.compile('\*\s*(.+)')
 R_ACTION = re.compile('\s+- (utter_.+)')
 
 
-class TestOutputChannel(OutputChannel):
-    """Simple bot that outputs the bots messages to the command line."""
-
-    def __init__(self, on_response, domain, processor):
-        self.on_response = on_response
-        self.domain = domain
-        self.processor = processor
-
-    def send_text_message(self, recipient_id, message):
-        # type: (Text, Text) -> None
-        self.on_response(message, recipient_id, self.processor)
-
-
-class TestNLG(TemplatedNaturalLanguageGenerator):
-    def generate(self, template_name, tracker, output_channel, **kwargs):
-        return {"text": template_name}
-
-
-class TestInputChannel(InputChannel):
-    """Input channel that reads the user messages from the command line."""
-    def __init__(self):
-        self.on_message = None
-
-    def start_sync_listening(self, message_handler):
-        self.on_message = message_handler
-
-    def blueprint(self, on_new_message):
-        # type: (Callable[[UserMessage], None])-> None
-        """Defines a Flask blueprint.
-
-        The blueprint will be attached to a running flask server and handel
-        incoming routes it registered for."""
-        raise NotImplementedError(
-            "Component listener needs to provide blueprint.")
-
-
 class TestSession(object):
     def __init__(self,
-                 model=None,
-                 domain=None,
+                 host=None,
                  test_cases=None,
                  shuffle=False,
                  distinct=True,
-                 rules=None,
-                 interpreter=RegexInterpreter(),
-                 create_output_channel=lambda on_response, domain, processor: TestOutputChannel(on_response, domain, processor),
-
                  ):
-        self.model = model
-        self.distinct = distinct
-        self.interpreter = interpreter
-        self.domain = TemplateDomain.load(os.path.join(model,'domain.yml'))
-        self.input_channel = TestInputChannel()
-        self.create_output_channel = create_output_channel
-        self.agent = self._create_agent(self.input_channel, self.interpreter, model, rules)
-        start_server([input_channel], None, None,
-                     int(config.port), agent).serve_forever()
 
+        self.endpoint = '{host}/webhooks/rest/webhook'.format(host=(host if host.startswith('http://') else 'http://' + host))
+        self.distinct = distinct
         self.stories = self._build_stories_from_path(test_cases)
         if shuffle:
-            random.shuffle(stories)
+            random.shuffle(self.stories)
 
-        self._run_test_cases()
-        self.failed = False
+    def _get_response(self, sender_id, message):
+        response = requests.post(self.endpoint, json={
+            "sender": sender_id,
+            "message": message,
+        })
 
+        logger.debug('Response incoming with status code {}'.format(response.status_code))
+        payload = response.json()
 
-    def _run_test_cases(self):
-        sender_id = "default"
-        for story in self.stories:
-            # self.agent.processor._get_tracker(sender_id)._reset()
-            if self.distinct:
-                sender_id = str(uuid.uuid4())
-            self._run_story_test(sender_id, story)
-        return True
+        if isinstance(payload, list):
+            return list(map(lambda obj: obj['text'], payload))
+        elif isinstance(payload, dict):
+            return payload['text']
+        else:
+            raise TypeError('Rasa Core response in an unrecognized type: {type}\npayload = {payload}'.format(
+                type=type(payload),
+                payload=payload,
+            ))
 
     def _run_story_test(self, sender_id, story):
         utils.print_color('\n## ' + story['title'].upper(), utils.bcolors.OKBLUE)
         self.failed = False
+        logger.debug('Starting story: {story}'.format(story=story))
         for index, step in enumerate(story['steps']):
             if self.failed is True:
                 return
+
             utterance = step.pop(0)
 
-            def on_response(response, recipient_id, proc):
-                global failed
-                if len(step) > 0:
-                    expected = step.pop(0)
-                    if response == expected:
-                        utils.print_color("  - {}".format(response), utils.bcolors.OKGREEN)
-                    else:
-                        utils.print_color("  - {} (exp: {})".format(response, expected), utils.bcolors.FAIL)
-                        utils.print_color("TEST CASE INTERRUPTED)".format(response, expected), utils.bcolors.FAIL)
-                        # _print_slot_values(proc, recipient_id)
-                        TestSession._restart_tracker(proc, recipient_id)
-
-                        self.failed = True
-
+            logger.debug('Starting step {index}: {utterance}'.format(index=index, utterance=utterance))
+            messages = self._get_response(sender_id, utterance)
+            logger.debug('messages = {}'.format(messages))
+            logger.debug('expected = {}'.format(step))
+            utils.print_color('* {}'.format(utterance), utils.bcolors.OKBLUE)
+            for message in messages:
+                expected = step.pop(0) if len(step) > 0 else None
+                if message == expected:
+                    utils.print_color("  - {}".format(message), utils.bcolors.OKGREEN)
                 else:
-                    utils.print_color("  - {} (not in case)".format(response), utils.bcolors.BOLD)
-
-            utils.print_color(utterance, utils.bcolors.OKGREEN)
-
-            self.input_channel.on_message(
-                UserMessage(utterance, self.create_output_channel(on_response, self.domain, self.agent.processor), sender_id))
+                    utils.print_color("  - {} (exp: {})".format(message, expected), utils.bcolors.FAIL)
+                    utils.print_color("TEST CASE INTERRUPTED)".format(message, expected), utils.bcolors.FAIL)
+                    self.failed = True
 
     @staticmethod
     def _concatenate_storyfiles(folder_path, prefix='test', output='aggregated_test_cases.md'):
@@ -145,17 +87,6 @@ class TestSession(object):
                     for line in infile:
                         outfile.write(line)
                     outfile.write("\n")
-
-    @staticmethod
-    def _restart_tracker(proc, sender_id):
-        proc._get_tracker(sender_id)._reset()
-        proc._get_tracker(sender_id).follow_up_action = ActionListen()
-
-    @staticmethod
-    def _print_slot_values(proc, recipient_id):
-        slot_values = "\n".join(["\t{}: {}".format(s.name, s.value)
-                                 for s in proc._get_tracker(recipient_id).slots.values()])
-        print("Current slot values: \n{}".format(slot_values))
 
     @staticmethod
     def _build_stories_from_path(test_cases_path):
@@ -190,38 +121,37 @@ class TestSession(object):
             stories.append(story)
         return stories
 
-    @staticmethod
-    def _create_agent(input_channel, interpreter, model, rules):
-        agent = SuperAgent.load(model,
-                                interpreter=interpreter,
-                                generator=TestNLG(None),
-                                rules=rules
-                                )
-        agent.handle_channels([input_channel])
-        return agent
+    def run_test_cases(self):
+        sender_id = str(uuid.uuid4())
+        for story in self.stories:
+            # self.agent.processor._get_tracker(sender_id)._reset()
+            if self.distinct:
+                sender_id = str(uuid.uuid4())
+            self._run_story_test(sender_id, story)
+        return True
 
 
 def create_argparser():
     parser = argparse.ArgumentParser(
             description='runs the bot.')
 
-    parser.add_argument('-m',
-                        '--model',
-                        help="Policy path",
+    parser.add_argument('--host',
+                        help="URL of the running rasa core instance",
                         required=True)
     parser.add_argument('-t', '--tests',
                         help="Test cases/stories",
                         required=True)
     parser.add_argument('-s', '--shuffle',
                         help="Shuffle",
-                        action="store_true",
+                        action='store_true',
                         default=False)
-    parser.add_argument('-r', '--rules',
-                        help="Rules",
-                        default=None)
     parser.add_argument('-u', '--distinct',
                         help="Unique id for each case",
-                        action="store_true",
+                        action='store_true',
+                        default=False)
+    parser.add_argument('-v', '--verbose',
+                        help="Show debug logs",
+                        action='store_true',
                         default=False)
     return parser
 
@@ -229,5 +159,7 @@ def create_argparser():
 if __name__ == "__main__":
     parser = create_argparser()
     args = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, format='%(message)s')
 
-    TestSession(args.model, args.tests, args.shuffle, args.distinct, args.rules)
+    runner = TestSession(args.host, args.tests, args.shuffle, args.distinct)
+    runner.run_test_cases()

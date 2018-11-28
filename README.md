@@ -271,6 +271,35 @@ class ActionFAQ(Action):
 
 The benefit of this approach is you have only ONE story for all your questions, so if your Q&A are stored externally you don't have to retrain your bot when adding/changing questions. Since you have only one story for potentially 100's of questions, this means you can better handle side questions in more complex dialogs. 
 
-### Where are automated tests ?
+## Run automated tests (experimental)
+You can write test cases as you would write stories, except you should only have `utter_...` actions. 
 
-Rasa Core will have evaluation tools in 0.12.
+```markdown
+## chitchat.greet
+* chitchat.greet
+  - utter_reply_to_greet
+
+## chitchat.how_are_you
+* chitchat.how_are_you
+  - utter_reply_to_how_are_you
+
+## chitchat.are_you_a_robot
+* chitchat.are_you_a_robot
+  - utter_reply_to_are_you_a_robot
+
+```
+
+The test session sends the user utterances via http POST requests to the rasa_core server endpoint specified
+in the `host` parameter. For this to work, make sure that your rasa core instance is running and has `rest:`
+written in the `config/credentials.yml` file (this tells rasa_core to accept REST api requests).
+
+You can run the tests with the command
+
+```bash
+python -m rasa_addons.tests --host localhost:5005 -t test_cases/ # -s(--shuffle) -u(--distinct) -v(--verbose)
+```
+
+You can put your test cases in different files starting with `test` (e.g. `test_chitchat.md`)in a directory.  
+At this time, it only runs the test and outputs dialogues in the console (errors in red). There is no report (Help wanted).
+You can also use `--distinct` to change the `sender_id` at every test case and `--shuffle` to shuffle test cases before running the tests.
+

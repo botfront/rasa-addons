@@ -11,7 +11,7 @@ setup(
     description="Rasa Addons - Productivity tools for Rasa Core",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=['jsonmerge', 'pyyaml', 'schema'],
+    install_requires=['jsonmerge', 'pyyaml', 'schema', 'rasa_core>=0.11.0'],
     licence='Apache 2.0',
     url='http://mrbot.ai',
     author_email='human@mrbot.ai',
