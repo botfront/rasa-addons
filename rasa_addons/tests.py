@@ -12,12 +12,18 @@ import logging
 import argparse
 
 import requests
+
 from rasa_core import utils
+from rasa_core.nlg import TemplatedNaturalLanguageGenerator
 
 logger = logging.getLogger(__name__)
 R_TITLE = re.compile('##\s*(.+)')
 R_USER = re.compile('\*\s*(.+)')
 R_ACTION = re.compile('\s+- (utter_.+)')
+
+class TestNLG(TemplatedNaturalLanguageGenerator):
+    def generate(self, template_name, tracker, output_channel, **kwargs):
+        return {"text": template_name}
 
 
 class TestSession(object):
