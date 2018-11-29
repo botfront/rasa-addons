@@ -18,8 +18,8 @@ from rasa_core.nlg import TemplatedNaturalLanguageGenerator
 
 logger = logging.getLogger(__name__)
 R_TITLE = re.compile('##\s*(.+)')
-R_USER = re.compile('\*\s*(.+)')
-R_ACTION = re.compile('\s+- (utter_.+)')
+R_USER = re.compile('\*\s*([^\[]+)(?:\s+(\[.+\]$))?')
+R_ACTION = re.compile('\s+- (utter_\S+)(?:\s+(\[.+\]$))?')
 
 class TestNLG(TemplatedNaturalLanguageGenerator):
     def generate(self, template_name, tracker, output_channel, **kwargs):
@@ -36,6 +36,7 @@ class TestSession(object):
 
         self.endpoint = '{host}/webhooks/rest/webhook'.format(host=(host if host.startswith('http://') else 'http://' + host))
         self.distinct = distinct
+        self.shuffle = shuffle
         self.stories = self._build_stories_from_path(test_cases)
         if shuffle:
             random.shuffle(self.stories)
@@ -94,18 +95,44 @@ class TestSession(object):
                         outfile.write(line)
                     outfile.write("\n")
 
-    @staticmethod
-    def _build_stories_from_path(test_cases_path):
+    def _should_append_line(self, query):
+        logger.debug('Flags for this line: {}'.format(query))
+        # check if there are flags at all
+        if query is None:
+            return True
+        extract_flag = re.compile(r'^\[--(\w+)\]$')
+        flags = [extract_flag.match(x).group(1) for x in query.split(' ')]
+        if None in flags:
+            logger.warning('Could not parse flags: {}\nThey should be in the format [--distinct] or [--shuffle]')
+
+        distinct = 'distinct' in flags
+        shuffle = 'shuffle' in flags
+
+        logger.debug('Flags: {}'.format(flags))
+        # Return false if either conditions not met
+        if distinct:
+            if not self.distinct:
+                return False
+        if shuffle:
+            if not self.shuffle:
+                return False
+
+        # Otherwise return true
+        return True
+
+    def _build_stories_from_path(self, test_cases_path):
+        logger.debug('BUILDING STORIES')
 
         test_cases_path = os.path.join(test_cases_path)
         if os.path.isdir(test_cases_path):
-            output_path= os.path.join(test_cases_path, 'aggregated_tests_cases.md')
+            output_path = os.path.join(test_cases_path, 'aggregated_tests_cases.md')
             TestSession._concatenate_storyfiles(test_cases_path, 'test', output_path)
             test_cases_path = output_path
         stories = []
 
         with open(test_cases_path, 'r') as test_file:
             lines = test_file.readlines()
+
         story = None
         for line in lines:
             m_story = R_TITLE.match(line)
@@ -120,9 +147,11 @@ class TestSession(object):
                     'steps': []
                 }
             elif m_user is not None:
-                story['steps'].append(['/' + m_user.group(1)])
+                if self._should_append_line(m_user.group(2)):
+                    story['steps'].append(['/' + m_user.group(1)])
             elif m_action is not None:
-                story['steps'][-1].append(m_action.group(1))
+                if self._should_append_line(m_action.group(2)):
+                    story['steps'][-1].append(m_action.group(1))
         if story is not None:
             stories.append(story)
         return stories
