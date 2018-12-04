@@ -70,13 +70,13 @@ class Rules(object):
 
         if len(filtered) < len(parse_data['entities']):
             # logging first
-            logger.warn("entity(ies) were removed from parse stories")
+            logger.warning("entity(ies) were removed from parse stories")
             parse_data['entities'] = filtered
 
     def run_swap_intent_rules(self, parse_data, tracker):
-        # don't do anything if no intent is present
-        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
-            return
+        # # don't do anything if no intent is present
+        # if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+        #     return
 
         previous_action = self._get_previous_action(tracker)
 
