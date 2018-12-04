@@ -102,7 +102,7 @@ class Rules(object):
     @staticmethod
     def _swap_intent_after(parse_data, rule):
         rule['unless'] = rule['unless'] if 'unless' in rule else []
-        if parse_data['intent']['name'] not in rule['unless']:
+        if parse_data['intent']['name'] is None or parse_data['intent']['name'] not in rule['unless']:
             logger.warning(
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
