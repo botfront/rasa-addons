@@ -87,22 +87,23 @@ class Rules(object):
     @staticmethod
     def _swap_intent(parse_data, previous_action, rule):
         # don't do anything if no intent is present
-        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
-            return
+        # if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+        #     return
 
         # for an after rule
         if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
             return Rules._swap_intent_after(parse_data, rule)
 
         # for a general substitution
-        elif 'after' not in rule and re.match(rule['intent'], parse_data['intent']['name']):
+        elif 'after' not in rule \
+                and (rule['intent'] is None and  parse_data['intent']['name'] is None or re.match(rule['intent'], parse_data['intent']['name'])):
             return Rules.swap_intent_with(parse_data, rule)
 
     @staticmethod
     def _swap_intent_after(parse_data, rule):
         rule['unless'] = rule['unless'] if 'unless' in rule else []
         if parse_data['intent']['name'] not in rule['unless']:
-            logger.warn(
+            logger.warning(
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
             parse_data.pop('intent_ranking', None)
