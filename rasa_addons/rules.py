@@ -95,9 +95,12 @@ class Rules(object):
             return Rules._swap_intent_after(parse_data, rule)
 
         # for a general substitution
-        elif 'after' not in rule \
-                and (rule['intent'] is None and  parse_data['intent']['name'] is None or re.match(rule['intent'], parse_data['intent']['name'])):
-            return Rules.swap_intent_with(parse_data, rule)
+        elif 'after' not in rule:
+            if rule['intent'] is None or  parse_data['intent']['name'] is None:
+                return
+            if (rule['intent'] is None and  parse_data['intent']['name'] is None) \
+                    or (re.match(rule['intent'], parse_data['intent']['name'])):
+                return Rules.swap_intent_with(parse_data, rule)
 
     @staticmethod
     def _swap_intent_after(parse_data, rule):
@@ -106,6 +109,7 @@ class Rules(object):
             logger.warning(
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
+            parse_data['intent']['confidence'] = 1.0
             parse_data.pop('intent_ranking', None)
             return True
 
