@@ -70,13 +70,13 @@ class Rules(object):
 
         if len(filtered) < len(parse_data['entities']):
             # logging first
-            logger.warn("entity(ies) were removed from parse stories")
+            logger.warning("entity(ies) were removed from parse stories")
             parse_data['entities'] = filtered
 
     def run_swap_intent_rules(self, parse_data, tracker):
-        # don't do anything if no intent is present
-        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
-            return
+        # # don't do anything if no intent is present
+        # if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+        #     return
 
         previous_action = self._get_previous_action(tracker)
 
@@ -87,24 +87,29 @@ class Rules(object):
     @staticmethod
     def _swap_intent(parse_data, previous_action, rule):
         # don't do anything if no intent is present
-        if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
-            return
+        # if parse_data["intent"]["name"] is None or parse_data["intent"]["name"] == "":
+        #     return
 
         # for an after rule
         if previous_action and 'after' in rule and re.match(rule['after'], previous_action):
             return Rules._swap_intent_after(parse_data, rule)
 
         # for a general substitution
-        elif 'after' not in rule and re.match(rule['intent'], parse_data['intent']['name']):
-            return Rules.swap_intent_with(parse_data, rule)
+        elif 'after' not in rule:
+            if rule['intent'] is None or  parse_data['intent']['name'] is None:
+                return
+            if (rule['intent'] is None and  parse_data['intent']['name'] is None) \
+                    or (re.match(rule['intent'], parse_data['intent']['name'])):
+                return Rules.swap_intent_with(parse_data, rule)
 
     @staticmethod
     def _swap_intent_after(parse_data, rule):
         rule['unless'] = rule['unless'] if 'unless' in rule else []
-        if parse_data['intent']['name'] not in rule['unless']:
-            logger.warn(
+        if parse_data['intent']['name'] is None or parse_data['intent']['name'] not in rule['unless']:
+            logger.warning(
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
+            parse_data['intent']['confidence'] = 1.0
             parse_data.pop('intent_ranking', None)
             return True
 

@@ -105,7 +105,7 @@ def test_swap_intent_none():
     # make sure intent swapped
     parse_data = {"intent": {"name": None, "confidence": 0.0}}
     Rules._swap_intent(parse_data,  "utter_something", swap_rules.rules[0])
-    assert parse_data["intent"]["name"] is None
+    assert parse_data["intent"]["name"] == "intent_something"
 
 
 def test_swap_intent_empty():
