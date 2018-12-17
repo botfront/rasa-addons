@@ -222,7 +222,7 @@ class SuperMessageProcessor(MessageProcessor):
         # don't ever directly mutate the tracker
         # - instead pass its events to log
         tracker.update(UserUttered(message.text, parse_data["intent"],
-                                   parse_data["entities"], parse_data))
+                                   parse_data["entities"], parse_data, input_channel=message.output_channel.name()))
         # store all entities as slots
         for e in self.domain.slots_for_entities(parse_data["entities"]):
             tracker.update(e)
