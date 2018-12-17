@@ -96,9 +96,9 @@ class Rules(object):
 
         # for a general substitution
         elif 'after' not in rule:
-            if rule['intent'] is None or  parse_data['intent']['name'] is None:
+            if rule['intent'] is None or parse_data['intent']['name'] is None:
                 return
-            if (rule['intent'] is None and  parse_data['intent']['name'] is None) \
+            if (rule['intent'] is None and parse_data['intent']['name'] is None) \
                     or (re.match(rule['intent'], parse_data['intent']['name'])):
                 return Rules.swap_intent_with(parse_data, rule)
 
