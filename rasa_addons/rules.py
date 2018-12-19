@@ -1,6 +1,7 @@
 import copy
 import io
 import logging
+import copy
 import re
 
 import yaml
@@ -39,6 +40,7 @@ class Rules(object):
         return self.rules_dict
 
     def interrupts(self, dispatcher, parse_data, tracker, run_action):
+        parse_data['original_data'] = copy.deepcopy(parse_data)
 
         # fallback has precedence
         if self.disambiguation_policy.fallback(parse_data, tracker, dispatcher, run_action) or \
@@ -54,6 +56,11 @@ class Rules(object):
             if error_template is not None:
                 self._utter_error_and_roll_back(dispatcher, tracker, error_template, run_action)
                 return True
+
+        logger.warning(parse_data)
+        if {key: val for key, val in parse_data.items() if key != 'original_data'} == parse_data['original_data']:
+            # Nothing has changed
+            del parse_data['original_data']
 
     @staticmethod
     def _utter_error_and_roll_back(dispatcher, tracker, template, run_action):
