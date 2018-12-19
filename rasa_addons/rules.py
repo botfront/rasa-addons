@@ -57,7 +57,6 @@ class Rules(object):
                 self._utter_error_and_roll_back(dispatcher, tracker, error_template, run_action)
                 return True
 
-        logger.warning(parse_data)
         if {key: val for key, val in parse_data.items() if key != 'original_data'} == parse_data['original_data']:
             # Nothing has changed
             del parse_data['original_data']
