@@ -222,7 +222,8 @@ class SuperMessageProcessor(MessageProcessor):
         # don't ever directly mutate the tracker
         # - instead pass its events to log
         tracker.update(UserUttered(message.text, parse_data["intent"],
-                                   parse_data["entities"], parse_data, input_channel=message.output_channel.name()))
+                                   parse_data["entities"], parse_data,
+                                   input_channel=message.input_channel))
         # store all entities as slots
         for e in self.domain.slots_for_entities(parse_data["entities"]):
             tracker.update(e)
@@ -230,6 +231,7 @@ class SuperMessageProcessor(MessageProcessor):
         logger.debug("Logged UserUtterance - "
                      "tracker now has {} events".format(len(tracker.events)))
 
+                     
     def _rule_interrupts(self, parse_data, tracker, message):
         if self.rules is not None:
             dispatcher = self.create_dispatcher(message.sender_id, message.output_channel, self.nlg)
@@ -253,7 +255,7 @@ class SuperMessageProcessor(MessageProcessor):
                and num_predicted_actions < self.max_number_of_predictions):
             # this actually just calls the policy's method by the same name
             action, policy, confidence = self.predict_next_action(tracker)
-
+            print (tracker.latest_message)
             should_predict_another_action = self._run_action(action,
                                                              tracker,
                                                              dispatcher,
@@ -286,6 +288,7 @@ class SuperMessageProcessor(MessageProcessor):
             parse_data = RegexInterpreter().parse(message.text)
         else:
             if isinstance(self.interpreter, RasaMultiNLUHttpInterpreter):
+                language = message.output_channel.language if hasattr(message.output_channel, 'language') else 'en'
                 parse_data = self.interpreter.parse(message.text, message.output_channel.language)
             else:
                 parse_data = self.interpreter.parse(message.text)

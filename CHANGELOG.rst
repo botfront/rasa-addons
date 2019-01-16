@@ -1,17 +1,11 @@
 Change Log
 ==========
 
-[0.5.x] - xxxxxx
+[0.5.6] - xxxxxx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Added
------
-
-Changed
--------
-
-Removed
--------
+- Fixed: missing input_channel in handle_message_with_tracker
+- Debug logs when substituting intents
 
 
 [0.5.2] - 2018-11-09

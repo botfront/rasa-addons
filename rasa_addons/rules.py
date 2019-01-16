@@ -112,7 +112,7 @@ class Rules(object):
     def _swap_intent_after(parse_data, rule):
         rule['unless'] = rule['unless'] if 'unless' in rule else []
         if parse_data['intent']['name'] is None or parse_data['intent']['name'] not in rule['unless']:
-            logger.warning(
+            logger.debug(
                 "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['intent']))
             parse_data['intent']['name'] = rule['intent']
             parse_data['intent']['confidence'] = 1.0
@@ -128,6 +128,8 @@ class Rules(object):
         pd_copy = copy.deepcopy(parse_data)
         parse_data['intent']['name'] = rule['with']
         parse_data['intent_ranking'] = [{"name": rule['with'], "confidence": 1.0}]
+        logger.debug(
+            "intent '{}' was replaced with '{}'".format(parse_data['intent']['name'], rule['with']))
         if 'entities' in rule and 'add' in rule["entities"]:
             for entity in rule["entities"]["add"]:
                 if 'entities' not in parse_data:
