@@ -6,7 +6,7 @@
 
 A set of power tools to 🚀🚀🚀 your productivity with Rasa
 
-- Input validation: if you expect Yes or No, make sure your users anser Yes or No
+- Input validation: if you expect Yes or No, make sure your users answer Yes or No
 - Disambiguation and fallback: automatically display dismabiguation options to users based on custom triggers
 - Intent Substitution: avoid random intents when users enter data without semantic consistency (names, brands, time,...)
 - Filter entities: define entities allowed for each intent
