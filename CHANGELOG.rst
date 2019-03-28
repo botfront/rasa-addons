@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+[0.5.8] - xxxxxx
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- changed: ensure compatibility with Core 0.13.x
+
 [0.5.6] - xxxxxx
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

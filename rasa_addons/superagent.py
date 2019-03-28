@@ -5,17 +5,13 @@ import time
 
 from rasa_core.agent import Agent, start_model_pulling_in_worker, _update_model_from_server
 from rasa_core.domain import TemplateDomain
-from rasa_core.interpreter import (
-    RegexInterpreter,
-    NaturalLanguageInterpreter,
-    INTENT_MESSAGE_PREFIX)
+from rasa_core.interpreter import NaturalLanguageInterpreter
 from rasa_core.nlg import NaturalLanguageGenerator
 from rasa_core.policies.ensemble import PolicyEnsemble
 from rasa_core.events import UserUttered
 from rasa_core.processor import MessageProcessor
 from rasa_core.dispatcher import Dispatcher
 
-from rasa_addons.multilingual_interpreter import RasaMultiNLUHttpInterpreter
 from rasa_addons.rules import Rules
 from rasa_core.utils import EndpointConfig
 from threading import Thread
@@ -223,14 +219,14 @@ class SuperMessageProcessor(MessageProcessor):
         # - instead pass its events to log
         tracker.update(UserUttered(message.text, parse_data["intent"],
                                    parse_data["entities"], parse_data,
-                                   input_channel=message.input_channel))
+                                   input_channel=message.input_channel,
+                                   message_id=message.message_id))
         # store all entities as slots
         for e in self.domain.slots_for_entities(parse_data["entities"]):
             tracker.update(e)
 
         logger.debug("Logged UserUtterance - "
                      "tracker now has {} events".format(len(tracker.events)))
-
                      
     def _rule_interrupts(self, parse_data, tracker, message):
         if self.rules is not None:
@@ -272,32 +268,6 @@ class SuperMessageProcessor(MessageProcessor):
             if self.on_circuit_break:
                 # call a registered callback
                 self.on_circuit_break(tracker, dispatcher)
-
-    def _parse_message(self, message):
-        # for testing - you can short-cut the NLU part with a message
-        # in the format _intent[entity1=val1,entity=val2]
-        # parse_data is a dict of intent & entities
-        if (message.text.startswith(INTENT_MESSAGE_PREFIX) or
-                message.text.startswith("_")):
-            if RegexInterpreter.is_using_deprecated_format(message.text):
-                warnings.warn(
-                        "Parsing messages with leading `_` is deprecated and "
-                        "will be removed. Instead, prepend your intents with "
-                        "`{0}`, e.g. `{0}mood_greet` "
-                        "or `{0}restart`.".format(INTENT_MESSAGE_PREFIX))
-            parse_data = RegexInterpreter().parse(message.text)
-        else:
-            if isinstance(self.interpreter, RasaMultiNLUHttpInterpreter):
-                language = message.output_channel.language if hasattr(message.output_channel, 'language') else 'en'
-                parse_data = self.interpreter.parse(message.text, message.output_channel.language)
-            else:
-                parse_data = self.interpreter.parse(message.text)
-
-        logger.debug("Received user message '{}' with intent '{}' "
-                     "and entities '{}'".format(message.text,
-                                                parse_data["intent"],
-                                                parse_data["entities"]))
-        return parse_data
 
 
 def start_rules_pulling_in_worker(rules_server, wait_time_between_pulls, agent):
