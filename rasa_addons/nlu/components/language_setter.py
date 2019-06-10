@@ -28,10 +28,10 @@ class LanguageSetter(Component):
 
     @classmethod
     def load(cls,
+             component_meta: Dict[Text, Any],
              model_dir: Text = None,
              model_metadata: Metadata = None,
              cached_component: Optional['LanguageSetter'] = None,
              **kwargs: Any
              ) -> 'LanguageSetter':
-        component_config = model_metadata.for_component(cls.name)
-        return cls(component_config, model_metadata.get("language"))
+        return cls(component_meta, model_metadata.get("language"))
