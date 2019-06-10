@@ -6,27 +6,29 @@ from rasa.nlu.training_data import Message
 from requests_futures.sessions import FuturesSession
 
 
-class HttpLogger(Component):
-    name = 'rasa_addons.nlu.components.HttpLogger'
+class ActivityLogger(Component):
+    name = 'rasa_addons.nlu.components.ActivityLogger'
     defaults = {
         'url': '0.0.0.0',
-        'params': {},  # Params added to the json payload
     }
 
     def __init__(self, component_config=None):
-        super(HttpLogger, self).__init__(component_config)
-        assert 'url' in component_config, 'You must specify the url to use the HttpLogger component'
+        super(ActivityLogger, self).__init__(component_config)
+        assert 'url' in component_config, 'You must specify the url to use the ActivityLogger component'
 
     def process(self, message, **kwargs):
         # type: (Message, **Any) -> None
 
         session = FuturesSession()
-        if not message.params or message.params.get('nolog', 'false') not in ['true', '1']:
+        params = kwargs.get('request_params', None)
+        if params is None:
+            return
+
+        if 'model' not in params or params.get('nolog', 'false') not in ['false', '0', '']:
             return
 
         output = self._message_dict(message)
-        for k, v in self.component_config.get('params').items():
-            output[k] = v
+        output['modelId'] = params.get('model')
 
         session.post(self.component_config.get('url'), json=output)
 
