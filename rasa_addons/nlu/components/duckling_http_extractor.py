@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 import simplejson
-from typing import Any, List, Optional, Text
+from typing import Any, List, Optional, Text, Dict
 
 from rasa.nlu.config import RasaNLUModelConfig
 from rasa.nlu.extractors import EntityExtractor
@@ -56,7 +56,7 @@ def convert_duckling_format_to_rasa(matches):
 class DucklingHTTPExtractor(EntityExtractor):
     """Searches for structured entites, e.g. dates, using a duckling server."""
 
-    name = "rasa_addons.nlu.components.DucklingHTTPExtractor"
+    name = "DucklingHTTPExtractor"
 
     provides = ["entities"]
 
@@ -85,10 +85,10 @@ class DucklingHTTPExtractor(EntityExtractor):
         self.language = language
 
     @classmethod
-    def create(cls, config: RasaNLUModelConfig) -> 'DucklingHTTPExtractor':
-
-        return cls(config.for_component(cls.name,
-                                        cls.defaults),
+    def create(
+        cls, component_config: Dict[Text, Any], config: RasaNLUModelConfig
+    ) -> 'DucklingHTTPExtractor':
+        return cls(component_config,
                    config.language)
 
     def _locale(self):
@@ -170,7 +170,7 @@ class DucklingHTTPExtractor(EntityExtractor):
     def process(self, message: Message, **kwargs: Any) -> None:
 
         if self._url() is not None:
-            params = kwargs.get('request_params', None)
+            params = kwargs
             timezone = self._timezone_from_config_or_request(
                 self.component_config, params.get("timezone", None))
             reference_time = self._reference_time_from_message_or_request(
@@ -194,11 +194,10 @@ class DucklingHTTPExtractor(EntityExtractor):
 
     @classmethod
     def load(cls,
+             component_meta: Dict[Text, Any],
              model_dir: Text = None,
              model_metadata: Metadata = None,
              cached_component: Optional['DucklingHTTPExtractor'] = None,
              **kwargs: Any
              ) -> 'DucklingHTTPExtractor':
-
-        component_config = model_metadata.for_component(cls.name)
-        return cls(component_config, model_metadata.get("language"))
+        return cls(component_meta, model_metadata.get("language"))

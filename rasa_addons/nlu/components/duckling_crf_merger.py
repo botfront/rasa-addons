@@ -5,10 +5,7 @@ from __future__ import unicode_literals
 
 import logging
 from rasa.nlu.components import Component
-from typing import Any
-from typing import List
-from typing import Optional
-from typing import Text
+from typing import Any, List, Optional, Text, Dict
 
 from rasa.nlu.config import RasaNLUModelConfig
 from rasa.nlu.model import Metadata
@@ -20,7 +17,7 @@ logger = logging.getLogger(__name__)
 class DucklingCrfMerger(Component):
     """Merges Duckling and CRF entities"""
 
-    name = "rasa_addons.nlu.components.DucklingCrfMerger"
+    name = "DucklingCrfMerger"
 
     provides = []
 
@@ -34,10 +31,10 @@ class DucklingCrfMerger(Component):
         super(DucklingCrfMerger, self).__init__(component_config)
 
     @classmethod
-    def create(cls, config):
-        # type: (RasaNLUModelConfig) -> DucklingCrfMerger
-
-        return DucklingCrfMerger(config.for_component(cls.name, cls.defaults))
+    def create(
+        cls, component_config: Dict[Text, Any], config: RasaNLUModelConfig
+    ) -> 'DucklingCrfMerger':
+        return cls(component_config)
 
     def process(self, message, **kwargs):
         # type: (Message, **Any) -> None
@@ -66,12 +63,10 @@ class DucklingCrfMerger(Component):
 
     @classmethod
     def load(cls,
-             model_dir=None,  # type: Text
-             model_metadata=None,  # type: Metadata
-             cached_component=None,  # type: Optional[DucklingCrfMerger]
-             **kwargs  # type: **Any
-             ):
-        # type: (...) -> DucklingCrfMerger
-
-        component_config = model_metadata.for_component(cls.name)
-        return cls(component_config)
+             component_meta: Dict[Text, Any],
+             model_dir: Text = None,
+             model_metadata: Metadata = None,
+             cached_component: Optional['DucklingCrfMerger'] = None,
+             **kwargs: Any
+             ) -> 'DucklingCrfMerger':
+        return cls(component_meta)

@@ -34,7 +34,7 @@ class BFMappingPolicy(Policy):
         'trigger': r'^map\..+'
     }
 
-    def __init__(self, priority: int = 990, **kwargs: Any) -> None:
+    def __init__(self, priority: int = 999, **kwargs: Any) -> None:
         super(BFMappingPolicy, self).__init__(priority=priority)
         self._load_params(**kwargs)
 
@@ -66,8 +66,11 @@ class BFMappingPolicy(Policy):
 
         prediction = [0.0] * domain.num_actions
         intent = tracker.latest_message.intent.get("name")
-        match = re.search(self.trigger, intent)
-        action = match.group(0) if match else None
+        if isinstance(intent, str):
+            match = re.search(self.trigger, intent)
+            action = match.group(0) if match else None
+        else:
+            action = None
         if tracker.latest_action_name == ACTION_LISTEN_NAME:
             if action:
                 idx = domain.index_for_action('action_map')

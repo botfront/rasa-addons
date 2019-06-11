@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class Sweeper(Component):
-    name = 'rasa_addons.nlu.components.Sweeper'
+    name = 'Sweeper'
 
     defaults = {
         'entity_names': []

@@ -6,7 +6,7 @@ from rasa.nlu.model import Metadata
 
 
 class LanguageSetter(Component):
-    name = 'rasa_addons.nlu.components.LanguageSetter'
+    name = 'LanguageSetter'
 
     def __init__(self,
                  component_config: Text = None,

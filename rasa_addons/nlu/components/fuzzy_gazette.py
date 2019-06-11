@@ -1,10 +1,7 @@
 import os
 import warnings
 
-from typing import Any
-from typing import Text
-from typing import Dict
-from typing import Optional
+from typing import Any, Text, Dict, Optional
 
 from rasa.nlu.components import Component
 from rasa.nlu.config import RasaNLUModelConfig
@@ -32,7 +29,7 @@ def _find_entity_config(entity, config):
 
 
 class FuzzyGazette(Component):
-    name = "rasa_addons.nlu.components.FuzzyGazette"
+    name = "FuzzyGazette"
 
     provides = ["entities"]
 
@@ -90,14 +87,14 @@ class FuzzyGazette(Component):
 
     @classmethod
     def load(cls,
-             model_dir=None,   # type: Optional[Text]
-             model_metadata=None,   # type: Optional[Metadata]
-             cached_component=None,   # type: Optional[Component]
-             **kwargs  # type: **Any
-             ):
+             component_meta: Dict[Text, Any],
+             model_dir: Text = None,
+             model_metadata: Metadata = None,
+             cached_component: Optional['FuzzyGazette'] = None,
+             **kwargs: Any
+             ) -> 'FuzzyGazette':
         from rasa_nlu.utils import read_json_file
 
-        meta = model_metadata.for_component(cls.name)
         file_name = meta.get("gazette_file", FUZZY_GAZETTE_FILE)
         path = os.path.join(model_dir, file_name)
 
@@ -108,7 +105,7 @@ class FuzzyGazette(Component):
             warnings.warn("Failed to load gazette file from '{}'"
                           "".format(path))
 
-        return FuzzyGazette(meta, gazette)
+        return FuzzyGazette(component_meta, gazette)
 
     def _load_gazette_list(self, gazette):
         # type: (Dict) -> None

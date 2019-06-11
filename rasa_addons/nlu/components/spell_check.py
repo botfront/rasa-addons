@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class BingSpellCheck(Component):
-    name = 'rasa_addons.nlu.components.BingSpellCheck'
+    name = 'BingSpellCheck'
 
     defaults = {
         'key': '',

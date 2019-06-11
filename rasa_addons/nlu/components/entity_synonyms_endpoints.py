@@ -7,16 +7,13 @@ import os
 import warnings
 
 from builtins import str
-from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Text
+from typing import Any, Dict, Optional, Text
 
 from rasa.nlu.extractors.entity_synonyms import EntitySynonymMapper
 
 
 class EntitySynonymBegin(EntitySynonymMapper):
-    name = "rasa_addons.nlu.components.EntitySynonymBegin"
+    name = "EntitySynonymBegin"
 
     provides = ["entities"]
 
@@ -47,7 +44,7 @@ class EntitySynonymBegin(EntitySynonymMapper):
 
 
 class EntitySynonymEnd(EntitySynonymMapper):
-    name = "rasa_addons.nlu.components.EntitySynonymEnd"
+    name = "EntitySynonymEnd"
 
     provides = ["entities"]
 

@@ -7,7 +7,7 @@ from requests_futures.sessions import FuturesSession
 
 
 class HttpLogger(Component):
-    name = 'rasa_addons.nlu.components.HttpLogger'
+    name = 'HttpLogger'
     defaults = {
         'url': '0.0.0.0',
         'params': {},  # Params added to the json payload
