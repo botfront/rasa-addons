@@ -31,7 +31,7 @@ class BFMappingPolicy(Policy):
     time a new mapped intent is defined."""
     
     defaults = {
-        'trigger': r'^map\..+'
+        'triggers': [{'trigger': r'^map\..+', 'action': 'action_map'}]
     }
 
     def __init__(self, priority: int = 999, **kwargs: Any) -> None:
@@ -41,8 +41,11 @@ class BFMappingPolicy(Policy):
     def _load_params(self, **kwargs: Dict[Text, Any]) -> None:
         config = copy.deepcopy(self.defaults)
         config.update(kwargs)
-        self.trigger = config.pop('trigger')
-        self._train_params = config
+        triggers = config.pop('triggers')
+        if isinstance(triggers, list):
+            self.triggers = {trigger['trigger']: trigger['action'] for trigger in triggers}
+        else:
+            self.triggers = triggers
 
     def train(
         self,
@@ -57,7 +60,7 @@ class BFMappingPolicy(Policy):
     def predict_action_probabilities(
         self, tracker: DialogueStateTracker, domain: Domain
     ) -> List[float]:
-        logger.debug('Trigger: ' + self.trigger)
+        logger.debug('Triggers: ' + ', '.join(self.triggers.keys()))
         """Predicts the assigned action.
 
         If the current intent is assigned to an action that action will be
@@ -66,17 +69,17 @@ class BFMappingPolicy(Policy):
 
         prediction = [0.0] * domain.num_actions
         intent = tracker.latest_message.intent.get("name")
+        action = None
         if isinstance(intent, str):
-            match = re.search(self.trigger, intent)
-            action = match.group(0) if match else None
-        else:
-            action = None
+            for trigger in self.triggers:
+                match = re.search(trigger, intent)
+                if match: action = self.triggers[trigger]
         if tracker.latest_action_name == ACTION_LISTEN_NAME:
             if action:
-                idx = domain.index_for_action('action_map')
+                idx = domain.index_for_action(action)
                 if idx is None:
                     logger.warning(
-                        "action_map is not defined."
+                        "{} is not defined.".format(action)
                     )
                 else:
                     prediction[idx] = 1
@@ -119,7 +122,7 @@ class BFMappingPolicy(Policy):
         config_file = os.path.join(path, "bf_mapping_policy.json")
         meta = {
             "priority": self.priority,
-            "trigger": self.trigger
+            "triggers": self.triggers
         }
         rasa.utils.io.create_directory_for_file(config_file)
         utils.dump_obj_as_json_to_file(config_file, meta)
