@@ -1,4 +1,0 @@
-fallback_policy:
-  trigger: $0 < 0.5
-  display:
-    text: utter_fallback_intro
