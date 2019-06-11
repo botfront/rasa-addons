@@ -14,10 +14,10 @@ from requests.auth import HTTPBasicAuth
 logging.basicConfig(level="WARN")
 logger = logging.getLogger()
 
-class ActionMap(Action):
+class ActionBotfrontMapping(Action):
 
     def name(self):
-        return 'action_map'
+        return 'action_botfront_mapping'
 
     def run(self, dispatcher, tracker, domain):
 
@@ -44,7 +44,7 @@ class ActionMap(Action):
                 events.append(SlotSet('latest_response_name', response_name))
                 if 'follow_up' in response and response['follow_up'].get('action') :
                     if response['follow_up']['action'].startswith('utter'):
-                        action = 'action_map_follow_up'
+                        action = 'action_botfront_mapping_follow_up'
                         events.append(SlotSet('followup_response_name', response['follow_up']['action']))
 
                     # FollowUpAction produces random results, so we force a minimum delay for a reminder.
