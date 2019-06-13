@@ -1,0 +1,2 @@
+rasa==1.0.9
+pytest
