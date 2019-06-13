@@ -1,0 +1,34 @@
+input_validation:
+  - after: utter_garantie_type_bien
+    expected:
+      - intents:
+        - cancel
+      - intents:
+        - garantie
+        entities:
+        - product_type
+    error_template: utter_general_validation_options
+
+  - after: utter_garantie_check_commercant_parle|utter_garantie_confirm_particulier|utter_garantie_bien_sous_garantie
+    expected:
+      - intents:
+        - affirm
+        - deny
+        - cancel
+    error_template: utter_general_validation_affirm_deny
+
+
+intent_substitution:
+  - after: utter_something
+    intent: intent_something
+    unless: chitchat.good_bye|chitchat.this_is_frustrating|chitchat.i_am_angry|request.handover
+
+  - intent: chitchat.i_am_angry|chitchat.this_is_frustrating
+    with: request.handover
+
+  - intent: chitchat\.(?!i_am_angry|this_is_frustrating)
+    with: chitchat
+    entities:
+      add:
+      - name: intent
+        value: '{intent}'

@@ -1,0 +1,12 @@
+disambiguation_policy:
+  trigger: $0 < 2 * $1
+  max_suggestions: 2
+  display:
+    intro_template: utter_disamb_intro
+    text_template: utter_disamb_text
+    button_title_template_prefix: utter_disamb
+    fallback_button:
+      title: utter_fallback
+      payload: /fallback
+    exclude: 
+      - intentB

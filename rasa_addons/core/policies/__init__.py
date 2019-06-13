@@ -1,1 +1,0 @@
-from rasa_addons.core.policies.botfront_mapping_policy import BotfrontMappingPolicy

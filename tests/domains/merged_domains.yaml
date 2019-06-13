@@ -1,0 +1,60 @@
+actions:
+- utter_1
+- utter_2
+- utter_3
+- package.Action1
+- package.Action2
+- utter_4
+- utter_5
+- package.Action3
+- package.Action4
+entities:
+- entity_1
+- entity_2
+- entity_3
+- entity_4
+intents:
+- intent_1
+- intent_2
+- intent_3
+- intent_4
+slots:
+ some_1:
+    type: text
+ some_2:
+    type: bool
+ some_3:
+    type: text
+ some_4:
+    type: bool
+templates:
+  utter_1:
+  - utter_11
+  - utter_12
+  - utter_13
+  utter_2:
+  - utter_2
+  utter_3:
+  - elements:
+    - attachment:
+      - content: v1
+        mediaType: m1
+        name: n1
+        type: Button
+        url: u1
+      content: content1
+      type: Note
+    text: text
+  utter_4:
+  - text: utter_4
+  utter_5:
+  - elements:
+    - attachment:
+      - content: Visiter
+        mediaType: m2
+        name: n2
+        type: Button
+        url: u2
+      content: c2
+      type: Note
+    text: utter_5

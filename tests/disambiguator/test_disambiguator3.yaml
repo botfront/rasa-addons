@@ -1,0 +1,2 @@
+disambiguation_policy:
+  trigger: $0 < 2 * $1

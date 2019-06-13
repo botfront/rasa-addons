@@ -1,6 +1,5 @@
 pyyaml
 jsonmerge
+rasa_core>=0.13.0
 schema==0.6.8
 requests
-requests_futures
-editdistance
