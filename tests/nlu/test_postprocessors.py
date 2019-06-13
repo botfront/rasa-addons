@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from rasa_addons.nlu.components import FuzzyGazette
+from rasa_addons.nlu.components import Gazette
 from rasa.nlu.training_data.message import Message
 
 from pytest import raises
@@ -16,7 +16,7 @@ def _get_instance(config=None, gazette=None):
     if gazette is None:
         gazette = {"type": ["chinese", "restaurant", "something totally different"], "city": ["New York"]}
 
-    return FuzzyGazette(component_config=config, gazette=gazette)
+    return Gazette(component_config=config, gazette=gazette)
 
 
 def _process_example(message, **kwargs):
