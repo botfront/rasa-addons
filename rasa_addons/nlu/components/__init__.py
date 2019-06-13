@@ -1,5 +1,5 @@
 from rasa_addons.nlu.components.language_setter import LanguageSetter
-from rasa_addons.nlu.components.fuzzy_gazette import FuzzyGazette
+from rasa_addons.nlu.components.gazette import Gazette
 from rasa_addons.nlu.components.entities_filter import EntitiesFilter
 from rasa_addons.nlu.components.sweeper import Sweeper
 from rasa_addons.nlu.components.duckling_crf_merger import DucklingCrfMerger
