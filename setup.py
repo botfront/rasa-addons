@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import io
 
@@ -11,9 +11,9 @@ setup(
     description="Rasa Addons - Components for Rasa",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=['jsonmerge', 'pyyaml', 'schema', 'requests', 'requests_futures'],
+    install_requires=['jsonmerge', 'pyyaml', 'schema', 'requests', 'requests_futures', 'editdistance'],
+    packages=find_packages(exclude=["tests"]),
     licence='Apache 2.0',
     url='https://botfront.io',
-    author_email='hi@botfront.io',
-    packages=['rasa_addons']
+    author_email='hi@botfront.io'
 )
