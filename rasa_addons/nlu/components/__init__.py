@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from rasa_addons.nlu.components.language_setter import LanguageSetter
 from rasa_addons.nlu.components.gazette import Gazette
 from rasa_addons.nlu.components.entities_filter import EntitiesFilter
@@ -8,3 +9,5 @@ from rasa_addons.nlu.components.entity_synonyms_endpoints import EntitySynonymBe
 from rasa_addons.nlu.components.activity_logger import ActivityLogger
 from rasa_addons.nlu.components.http_logger import HttpLogger
 from rasa_addons.nlu.components.spell_check import BingSpellCheck
+=======
+>>>>>>> parent of 40cc196... Revert "refactor: renamed/restructured components consistently with Rasa components structure"
