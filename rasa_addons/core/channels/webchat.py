@@ -25,7 +25,7 @@ class SocketBlueprint(Blueprint):
         super(SocketBlueprint, self).register(app, options)
 
 
-class SocketIOOutput(OutputChannel):
+class WebchatOutput(OutputChannel):
 
     @classmethod
     def name(cls):
@@ -111,7 +111,7 @@ class SocketIOOutput(OutputChannel):
         await self.sio.emit(self.bot_message_evt, **json_message)
 
 
-class SocketIOInput(InputChannel):
+class WebchatInput(InputChannel):
     """A socket.io input channel."""
 
     @classmethod
@@ -170,7 +170,7 @@ class SocketIOInput(InputChannel):
 
         @sio.on(self.user_message_evt, namespace=self.namespace)
         async def handle_message(sid, data):
-            output_channel = SocketIOOutput(sio, sid, self.bot_message_evt)
+            output_channel = WebchatOutput(sio, sid, self.bot_message_evt)
 
             if self.session_persistence and ("session_id" not in data or data["session_id"] is None):
                 logger.debug("A message without a valid sender_id was received")

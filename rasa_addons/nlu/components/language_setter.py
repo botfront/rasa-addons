@@ -9,7 +9,7 @@ class LanguageSetter(Component):
     name = 'LanguageSetter'
 
     def __init__(self,
-                 component_config: Text = None,
+                 component_config:  Dict[Text, Any] = None,
                  language: Optional[List[Text]] = None) -> None:
         super(LanguageSetter, self).__init__(component_config)
         self.language = language
@@ -28,10 +28,10 @@ class LanguageSetter(Component):
 
     @classmethod
     def load(cls,
-             component_meta: Dict[Text, Any],
+             meta: Dict[Text, Any],
              model_dir: Text = None,
              model_metadata: Metadata = None,
              cached_component: Optional['LanguageSetter'] = None,
              **kwargs: Any
              ) -> 'LanguageSetter':
-        return cls(component_meta, model_metadata.get("language"))
+        return cls(meta, model_metadata.get("language"))
