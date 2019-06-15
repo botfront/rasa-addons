@@ -22,7 +22,7 @@ from rasa.core.trackers import DialogueStateTracker
 logger = logging.getLogger(__name__)
 
 
-class BFMappingPolicy(Policy):
+class BotfrontMappingPolicy(Policy):
     """Policy which maps intents directly to actions.
 
     Like RasaHQ's, except it looks for regex in the intent
@@ -35,7 +35,7 @@ class BFMappingPolicy(Policy):
     }
 
     def __init__(self, priority: int = 999, **kwargs: Any) -> None:
-        super(BFMappingPolicy, self).__init__(priority=priority)
+        super(BotfrontMappingPolicy, self).__init__(priority=priority)
         self._load_params(**kwargs)
 
     def _load_params(self, **kwargs: Dict[Text, Any]) -> None:
@@ -90,7 +90,7 @@ class BFMappingPolicy(Policy):
             if any(prediction):
                 logger.debug(
                     "The predicted intent '{}' is being "
-                    " handled by BFMappingPolicy."
+                    " handled by BotfrontMappingPolicy."
                     "".format(intent)
                 )
         elif tracker.latest_action_name == action and action is not None:
@@ -101,7 +101,7 @@ class BFMappingPolicy(Policy):
                 # this ensures that we only predict listen, if we predicted
                 # the mapped action
                 logger.debug(
-                    "BFMappingPolicy has just been triggered, "
+                    "BotfrontMappingPolicy has just been triggered, "
                     "so now returning to action_listen. "
                 )
 
@@ -109,14 +109,14 @@ class BFMappingPolicy(Policy):
                 prediction[idx] = 1
         else:
             logger.debug(
-                "Predicted intent is not handled by BFMappingPolicy."
+                "Predicted intent is not handled by BotfrontMappingPolicy."
             )
         return prediction
 
     def persist(self, path: Text) -> None:
         """Persists priority and trigger regex"""
 
-        config_file = os.path.join(path, "bf_mapping_policy.json")
+        config_file = os.path.join(path, "botfront_mapping_policy.json")
         meta = {
             "priority": self.priority,
             "trigger": self.trigger
@@ -125,12 +125,12 @@ class BFMappingPolicy(Policy):
         utils.dump_obj_as_json_to_file(config_file, meta)
 
     @classmethod
-    def load(cls, path: Text) -> "BFMappingPolicy":
+    def load(cls, path: Text) -> "BotfrontMappingPolicy":
         """Returns the class with the configured priority."""
 
         meta = {}
         if os.path.exists(path):
-            meta_path = os.path.join(path, "bf_mapping_policy.json")
+            meta_path = os.path.join(path, "botfront_mapping_policy.json")
             if os.path.isfile(meta_path):
                 meta = json.loads(rasa.utils.io.read_file(meta_path))
 
