@@ -56,7 +56,7 @@ class SocketIOOutput(OutputChannel):
         print(text)
         await self._send_message(self.sid, {"text": text})
 
-    def send_image_url(
+    async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
     ) -> None:
         """Sends an image to the output"""
@@ -66,7 +66,7 @@ class SocketIOOutput(OutputChannel):
                 "payload": {"src": image}
             }
         }
-        self._send_message(self.sid, message)
+        await self._send_message(self.sid, message)
 
     async def send_text_with_buttons(self, recipient_id: Text, text: Text,
                                buttons: List[Dict[Text, Any]],

@@ -1,1 +1,1 @@
-from rasa_addons.core.policies.bf_mapping_policy import BFMappingPolicy
+from rasa_addons.core.policies.botfront_mapping_policy import BotfrontMappingPolicy

@@ -14,10 +14,10 @@ from requests.auth import HTTPBasicAuth
 logging.basicConfig(level="WARN")
 logger = logging.getLogger()
 
-class ActionMapFollowUp(Action):
+class ActionBotfrontMappingFollowUp(Action):
     
     def name(self):
-        return 'action_map_follow_up'
+        return 'action_botfront_mapping_follow_up'
     
     def run(self, dispatcher, tracker, domain):
         action = tracker.get_slot('followup_response_name')

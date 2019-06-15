@@ -10,26 +10,8 @@ from rasa.nlu.model import Metadata
 
 from .fuzzy_matcher import process
 
-FUZZY_GAZETTE_FILE = "fuzzy_gazette.json"
-
-
-def _find_matches(query, gazette, mode="ratio", limit=5):
-    output = {}
-    for key, val in gazette.items():
-        output[key] = process.extract(query, val, limit=limit, scorer=mode)
-    return output
-
-
-def _find_entity_config(entity, config):
-    for rep in config.get("entities", []):
-        if entity["entity"] == rep["name"]:
-            return rep
-
-    return None
-
-
-class FuzzyGazette(Component):
-    name = "FuzzyGazette"
+class Gazette(Component):
+    name = "Gazette"
 
     provides = ["entities"]
 
@@ -38,27 +20,33 @@ class FuzzyGazette(Component):
         "entities": [],
     }
 
-    def __init__(self, component_config=None, gazette=None):
-        # type: (RasaNLUModelConfig, Dict) -> None
+    def __init__(self,
+                 component_config: Text = None,
+                 gazette: Optional[Dict] = None) -> None:
 
-        super(FuzzyGazette, self).__init__(component_config)
+        super(Gazette, self).__init__(component_config)
         self.gazette = gazette if gazette else {}
+        if gazette: self._load_config()
+        self.limit = self.component_config.get("max_num_suggestions")
+        self.entities = self.component_config.get("entities", [])
 
-    def process(self, message, **kwargs):
-        # type: (Message, **Any) -> None
+    def process(self, message: Message, **kwargs: Any) -> None:
 
-        self._load_config()
         entities = message.get("entities", [])
-        limit = self.component_config.get("max_num_suggestions")
-
         new_entities = []
+
         for entity in entities:
-            config = _find_entity_config(entity, self.component_config)
+            config = self._find_entity(entity, self.entities)
             if config is None or not isinstance(entity["value"], str):
                 new_entities.append(entity)
                 continue
 
-            matches = process.extract(entity["value"], self.gazette.get(entity["entity"], []), limit=limit, scorer=config["mode"])
+            matches = process.extract(
+                entity["value"],
+                self.gazette.get(entity["entity"], []),
+                limit=self.limit,
+                scorer=config["mode"]
+            )
             primary, score = matches[0] if len(matches) else (None, None)
 
             if primary is not None and score > config["min_score"]:
@@ -68,52 +56,45 @@ class FuzzyGazette(Component):
 
         message.set("entities", new_entities)
 
-    def train(self, training_data, config, **kwargs):
-        # type: (TrainingData, RasaNLUModelConfig, **Any) -> None
-
-        self._load_gazette_list(training_data.fuzzy_gazette)
-
-    def persist(self, model_dir):
-        # type: (Text) -> Optional[Dict[Text, Any]]
-
-        gazette = self.gazette if self.gazette else {}
-
-        from rasa_nlu.utils import write_json_to_file
-        file_name = os.path.join(model_dir, FUZZY_GAZETTE_FILE)
-        write_json_to_file(file_name, gazette,
-                               separators=(',', ': '))
-
-        return {"gazette_file": FUZZY_GAZETTE_FILE}
+    def train(
+        self, training_data: TrainingData, cfg: RasaNLUModelConfig, **kwargs: Any
+    ) -> None:
+        self.gazette = self._load_gazette_list(training_data.gazette)
 
     @classmethod
     def load(cls,
              component_meta: Dict[Text, Any],
              model_dir: Text = None,
              model_metadata: Metadata = None,
-             cached_component: Optional['FuzzyGazette'] = None,
+             cached_component: Optional['Gazette'] = None,
              **kwargs: Any
-             ) -> 'FuzzyGazette':
-        from rasa_nlu.utils import read_json_file
+             ) -> 'Gazette':
+        from rasa.nlu.utils import read_json_file
 
-        file_name = meta.get("gazette_file", FUZZY_GAZETTE_FILE)
-        path = os.path.join(model_dir, file_name)
-
-        if os.path.isfile(path):
-            gazette = read_json_file(path)
+        td = read_json_file(os.path.join(model_dir, "training_data.json"))
+        if "gazette" in td["rasa_nlu_data"]:
+            gazette = cls._load_gazette_list(td["rasa_nlu_data"]["gazette"])
         else:
             gazette = None
-            warnings.warn("Failed to load gazette file from '{}'"
-                          "".format(path))
+            warnings.warn("Could not find Gazette in persisted training data file.")
 
-        return FuzzyGazette(component_meta, gazette)
+        return Gazette(component_meta, gazette)
 
-    def _load_gazette_list(self, gazette):
-        # type: (Dict) -> None
-
+    @staticmethod
+    def _load_gazette_list(gazette: Optional[Dict]) -> None:
+        gazette_dict = {}
         for item in gazette:
             name = item["value"]
             table = item["gazette"]
-            self.gazette[name] = table
+            gazette_dict[name] = table
+        return gazette_dict
+
+    @staticmethod
+    def _find_entity(entity, entities):
+        for rep in entities:
+            if entity["entity"] == rep["name"]:
+                return rep
+        return None
 
     def _load_config(self):
         entities = []
