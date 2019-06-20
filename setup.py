@@ -6,9 +6,9 @@ with io.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md
     long_description = f.read()
 setup(
     name='rasa_addons',
-    version='0.6.0',
+    version='0.6.1',
     author='Botfront',
-    description="Rasa Addons - Components for Rasa",
+    description="Rasa Addons - Components for Rasa and Botfront",
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=['pyyaml', 'requests', 'requests_futures', 'fuzzy_matcher'],
