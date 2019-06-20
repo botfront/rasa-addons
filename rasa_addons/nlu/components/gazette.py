@@ -8,7 +8,7 @@ from rasa.nlu.config import RasaNLUModelConfig
 from rasa.nlu.training_data import Message, TrainingData
 from rasa.nlu.model import Metadata
 
-from .fuzzy_matcher import process
+from fuzzy_matcher import process
 
 class Gazette(Component):
     name = "Gazette"
