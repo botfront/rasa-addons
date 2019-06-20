@@ -1,6 +1,4 @@
 pyyaml
-jsonmerge
-schema==0.6.8
 requests
 requests_futures
-editdistance
+fuzzy_matcher

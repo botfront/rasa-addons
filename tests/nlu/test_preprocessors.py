@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from rasa_addons.nlu.components import BingSpellCheck
+from rasa_addons.nlu.components.spell_check import BingSpellCheck
 from rasa.nlu.training_data.message import Message
 
 

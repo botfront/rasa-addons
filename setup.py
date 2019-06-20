@@ -11,7 +11,7 @@ setup(
     description="Rasa Addons - Components for Rasa",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=['jsonmerge', 'pyyaml', 'schema', 'requests', 'requests_futures', 'editdistance'],
+    install_requires=['pyyaml', 'requests', 'requests_futures', 'fuzzy_matcher'],
     packages=find_packages(exclude=["tests"]),
     licence='Apache 2.0',
     url='https://botfront.io',

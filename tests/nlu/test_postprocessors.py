@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from rasa_addons.nlu.components import Gazette
+from rasa_addons.nlu.components.gazette import Gazette
 from rasa.nlu.training_data.message import Message
 
 from pytest import raises
