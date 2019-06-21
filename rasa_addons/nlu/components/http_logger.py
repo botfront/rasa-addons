@@ -21,7 +21,8 @@ class HttpLogger(Component):
         # type: (Message, **Any) -> None
 
         session = FuturesSession()
-        if not message.params or message.params.get('nolog', 'false') not in ['true', '1']:
+        if not message.params: message.params = {}
+        if message.params.get('nolog', 'false') in ['true', '1']:
             return
 
         output = self._message_dict(message)
