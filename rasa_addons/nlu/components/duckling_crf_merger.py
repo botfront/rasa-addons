@@ -23,6 +23,7 @@ class DucklingCrfMerger(Component):
 
     defaults = {
         "entities": None,
+        "duckling_name": "rasa_addons.nlu.components.duckling_http_extractor.DucklingHTTPExtractor",
     }
 
     def __init__(self, component_config=None):
@@ -44,7 +45,7 @@ class DucklingCrfMerger(Component):
         indices_to_remove = []
 
         for index, duck_entity in enumerate(message.get("entities")):
-            if duck_entity["extractor"].startswith("ner_duckling"):
+            if duck_entity["extractor"].startswith(self.component_config['duckling_name']):
                 # looking for CRF entities surrounding the duckling one matching config settings
                 containing_crf = list(filter(
                     lambda e: e["start"] <= duck_entity["start"] and e["end"] >= duck_entity["end"] and duck_entity["entity"] in

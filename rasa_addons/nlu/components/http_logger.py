@@ -4,7 +4,10 @@ from rasa.nlu.components import Component
 from rasa.nlu.training_data import Message
 
 from requests_futures.sessions import FuturesSession
+import json
+import logging
 
+logger = logging.getLogger(__name__)
 
 class HttpLogger(Component):
     name = 'HttpLogger'
@@ -16,6 +19,7 @@ class HttpLogger(Component):
     def __init__(self, component_config=None):
         super(HttpLogger, self).__init__(component_config)
         assert 'url' in component_config, 'You must specify the url to use the HttpLogger component'
+        assert 'model_id' in component_config, 'You must specify the model_id to use the HttpLogger component'
 
     def process(self, message, **kwargs):
         # type: (Message, **Any) -> None
@@ -28,8 +32,12 @@ class HttpLogger(Component):
         output = self._message_dict(message)
         for k, v in self.component_config.get('params').items():
             output[k] = v
+        output['modelId'] = self.component_config.get('model_id')
 
-        session.post(self.component_config.get('url'), json=output)
+        future = session.post(self.component_config.get('url'), json=output)
+        response = future.result()
+        if response.status_code != 200:
+            logger.error('{} Error from API: {}'.format(str(response.status_code), json.loads(response.content)['error']))
 
     @staticmethod
     def _message_dict(message):
