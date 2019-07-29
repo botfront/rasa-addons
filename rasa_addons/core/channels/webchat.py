@@ -142,7 +142,7 @@ class WebchatInput(InputChannel):
         self.socketio_path = socketio_path
 
     def blueprint(self, on_new_message):
-        sio = AsyncServer(async_mode="sanic")
+        sio = AsyncServer(async_mode="sanic", cors_allowed_origins=[])
         socketio_webhook = SocketBlueprint(sio, self.socketio_path, 'socketio_webhook', __name__)
 
         @socketio_webhook.route("/", methods=['GET'])
