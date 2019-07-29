@@ -126,6 +126,7 @@ class WebchatInput(InputChannel):
                    credentials.get("namespace"),
                    credentials.get("session_persistence", False),
                    credentials.get("socketio_path", "/socket.io"),
+                   credentials.get("cors_allowed_origins", "*")
                    )
 
     def __init__(self,
@@ -133,16 +134,18 @@ class WebchatInput(InputChannel):
                  bot_message_evt="bot_uttered",  # type: Text
                  namespace=None,  # type: Optional[Text]
                  session_persistence=False,
-                 socketio_path='/socket.io'  # type: Optional[Text]
+                 socketio_path='/socket.io',  # type: Optional[Text]
+                 cors_allowed_origins="*",
                  ):
         self.bot_message_evt = bot_message_evt
         self.session_persistence = session_persistence
         self.user_message_evt = user_message_evt
         self.namespace = namespace
         self.socketio_path = socketio_path
+        self.cors_allowed_origins = cors_allowed_origins
 
     def blueprint(self, on_new_message):
-        sio = AsyncServer(async_mode="sanic")
+        sio = AsyncServer(async_mode="sanic", cors_allowed_origins=self.cors_allowed_origins )
         socketio_webhook = SocketBlueprint(sio, self.socketio_path, 'socketio_webhook', __name__)
 
         @socketio_webhook.route("/", methods=['GET'])
