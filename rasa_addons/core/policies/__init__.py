@@ -1,0 +1,2 @@
+from rasa_addons.core.policies.disambiguation import DisambiguationPolicy
+from rasa_addons.core.policies.botfront_mapping import BotfrontMappingPolicy
