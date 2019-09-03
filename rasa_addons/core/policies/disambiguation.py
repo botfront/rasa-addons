@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Any, List, Text, Dict
 import rasa.utils.io
+import re
 
 from rasa.core import utils
 from rasa.core.domain import Domain
@@ -13,12 +14,7 @@ from rasa.core.trackers import DialogueStateTracker
 logger = logging.getLogger(__name__)
 
 class DisambiguationPolicy(Policy):
-    """Policy which predicts fallback actions.
-
-    A fallback can be triggered by a low confidence score on a
-    NLU prediction or by a low confidence score on an action
-    prediction. """
-
+    
     @staticmethod
     def _standard_featurizer():
         return None
@@ -28,7 +24,7 @@ class DisambiguationPolicy(Policy):
         priority: int = 4,
         disambiguation_trigger: str = "$0 < 2 * $1",
         fallback_trigger: float = 0.30,
-        excluded_intents: List = [], # list of regex e.g ["chitchat.*", "basics.*",...]
+        excluded_intents: List = [], # list of regex e.g ["^chitchat\..*", ...]
         intent_mappings: Dict[Text, Dict[Text, Text]] = {}, # {"basics.yes": {"en": "Yes", "fr": "Oui"}}
         n_suggestions: int = 3,
         disambiguation_title: Dict[Text, Text] = {
@@ -61,26 +57,27 @@ class DisambiguationPolicy(Policy):
     def generate_disambiguation_message(self, tracker):
         language = tracker.latest_message.parse_data.get('language', 'en')
         intent_ranking = tracker.latest_message.parse_data.get('intent_ranking', [])
-        intent_ranking = [intent for intent in intent_ranking
-                          if intent.get('name', '') not in self.excluded_intents][:self.n_suggestions]
-                              
-        first_intent_names = [intent.get('name', '')
-                              for intent in intent_ranking]
-
-        mapped_intents = [(name, self.intent_mappings.get(name, {language: name})[language])
-                          for name in first_intent_names]
+        intent_names = [intent.get('name', '')
+                        for intent in intent_ranking]
+        intent_names = [intent for intent in intent_names if len([
+                        excl for excl in self.excluded_intents if
+                        re.compile(excl).fullmatch(intent) != None]) < 1][:self.n_suggestions]
 
         entities = tracker.latest_message.parse_data.get("entities", [])
-        entities_json, entities_text = self.get_formatted_entities(entities)
+        mapped_intents = [(name, self.fill_entity(
+                            self.intent_mappings.get(name, {language: name})[language],
+                            entities
+                          )) for name in intent_names]
+
+        entities_json = json.dumps({e.get("entity"): e.get("value") for e in entities}) if len(entities) > 0 else ""
 
         message_title = self.disambiguation_title["en"]
         deny_text = self.intent_mappings.get(self.deny_suggestion_intent_name, {"en": "Something else"})[language]
 
         buttons = []
         for intent in mapped_intents:
-            buttons.append({'title': intent[1] + entities_text,
-                            'payload': '/{}{}'.format(intent[0],
-                                                      entities_json)})
+            buttons.append({'title': intent[1],
+                            'payload': '/{}{}'.format(intent[0], entities_json)})
 
         buttons.append({'title': deny_text,
                         'payload': '/{}'.format(self.deny_suggestion_intent_name)})
@@ -88,9 +85,18 @@ class DisambiguationPolicy(Policy):
             "title": message_title,
             "buttons": buttons
         }
+    
+    @staticmethod
+    def fill_entity(template, entities):
+        title = template
+        for e in entities:
+            title = title.replace('{' + e.get("entity") + '}', e.get("value"))
+        title = re.sub(r'{.*?}', r'', title)
+        return title
 
     @staticmethod
     def set_slot(tracker, message):
+        if len(message["buttons"]) < 2: return None # abort if only deny_suggestions button would be shown
         try:
             tracker.update(SlotSet("disambiguation_message", value=message))
             result = message
@@ -100,24 +106,8 @@ class DisambiguationPolicy(Policy):
         return result
 
     @staticmethod
-    def get_formatted_entities(entities: List[Dict[str, Any]]) -> (Text, Text):
-        key_value_entities = {}
-        for e in entities:
-            key_value_entities[e.get("entity")] = e.get("value")
-        entities_json = ""
-        entities_text = ""
-        if len(entities) > 0:
-            entities_json = json.dumps(key_value_entities)
-            entities_text = ["'{}': '{}'".format(k, key_value_entities[k])
-                            for k in key_value_entities]
-            entities_text = ", ".join(entities_text)
-            entities_text = " ({})".format(entities_text)
-
-        return entities_json, entities_text
-
-    @staticmethod
     def _should_disambiguate(parse_data, trigger):
-        #if not len(parse_data["intent_ranking"]): return False
+        # if not len(parse_data["intent_ranking"]): return False
         import re
         # pattern to match $0, $1, $2, ... and returning 0, 1, 2,... in match groups
         pattern = re.compile(r"\$(\d)")
