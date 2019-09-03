@@ -14,7 +14,7 @@ from rasa.core.trackers import DialogueStateTracker
 logger = logging.getLogger(__name__)
 
 class DisambiguationPolicy(Policy):
-    
+
     @staticmethod
     def _standard_featurizer():
         return None
@@ -54,16 +54,13 @@ class DisambiguationPolicy(Policy):
     ) -> None:
         pass
 
-    def generate_disambiguation_message(self, tracker):
-        language = tracker.latest_message.parse_data.get('language', 'en')
-        intent_ranking = tracker.latest_message.parse_data.get('intent_ranking', [])
+    def generate_disambiguation_message(self, intent_ranking, entities, language):
         intent_names = [intent.get('name', '')
                         for intent in intent_ranking]
         intent_names = [intent for intent in intent_names if len([
                         excl for excl in self.excluded_intents if
                         re.compile(excl).fullmatch(intent) != None]) < 1][:self.n_suggestions]
 
-        entities = tracker.latest_message.parse_data.get("entities", [])
         mapped_intents = [(name, self.fill_entity(
                             self.intent_mappings.get(name, {language: name})[language],
                             entities
@@ -71,15 +68,17 @@ class DisambiguationPolicy(Policy):
 
         entities_json = json.dumps({e.get("entity"): e.get("value") for e in entities}) if len(entities) > 0 else ""
 
-        message_title = self.disambiguation_title["en"]
+        message_title = self.disambiguation_title[language]
         deny_text = self.intent_mappings.get(self.deny_suggestion_intent_name, {"en": "Something else"})[language]
 
         buttons = []
         for intent in mapped_intents:
             buttons.append({'title': intent[1],
+                            'type': 'postback',
                             'payload': '/{}{}'.format(intent[0], entities_json)})
 
         buttons.append({'title': deny_text,
+                        'type': 'postback',
                         'payload': '/{}'.format(self.deny_suggestion_intent_name)})
         return {
             "title": message_title,
@@ -106,8 +105,7 @@ class DisambiguationPolicy(Policy):
         return result
 
     @staticmethod
-    def _should_disambiguate(parse_data, trigger):
-        # if not len(parse_data["intent_ranking"]): return False
+    def _should_disambiguate(intent_ranking, trigger):
         import re
         # pattern to match $0, $1, $2, ... and returning 0, 1, 2,... in match groups
         pattern = re.compile(r"\$(\d)")
@@ -116,10 +114,15 @@ class DisambiguationPolicy(Policy):
         matches = re.findall(pattern, trigger)
         for i in matches:
             # if not enough intents in ranking to apply the rule, policy rule can't be triggered
-            if int(i) >= len(parse_data["intent_ranking"]): return False
-            eval_string = re.sub(r'\$' + i, str(parse_data["intent_ranking"][int(i)]["confidence"]), eval_string)
+            if int(i) >= len(intent_ranking): return False
+            eval_string = re.sub(r'\$' + i, str(intent_ranking[int(i)]["confidence"]), eval_string)
 
         return eval(eval_string, {'__builtins__': {}})
+    
+    @staticmethod
+    def _should_fallback(intent_ranking, trigger):
+        bonified_ranking = intent_ranking + [{"confidence": 0}]
+        return bonified_ranking[0]["confidence"] < trigger
 
     def _is_user_input_expected(self, tracker: DialogueStateTracker) -> bool:
         return tracker.latest_action_name in [
@@ -140,10 +143,13 @@ class DisambiguationPolicy(Policy):
     ) -> List[float]:
 
         parse_data = tracker.latest_message.parse_data
+        entities = parse_data.get("entities", [])
+        language = parse_data.get('language', 'en')
+        intent_ranking = parse_data.get('intent_ranking', [])
         can_apply = tracker.latest_action_name == "action_listen"
-        should_fallback = can_apply and parse_data["intent"]["confidence"] < self.fallback_trigger
+        should_fallback = can_apply and self._should_fallback(intent_ranking, self.fallback_trigger)
         should_disambiguate = can_apply and self._should_disambiguate(
-            parse_data, self.disambiguation_trigger
+            intent_ranking, self.disambiguation_trigger
         )
 
         if self._is_user_input_expected(tracker):
@@ -168,7 +174,7 @@ class DisambiguationPolicy(Policy):
 
         elif should_disambiguate:
             logger.debug("Triggering disambiguation")
-            disambiguation_message = self.generate_disambiguation_message(tracker)
+            disambiguation_message = self.generate_disambiguation_message(intent_ranking, entities, language)
             slot_set = self.set_slot(tracker, disambiguation_message)
             if slot_set:
                 result = confidence_scores_for(self.disambiguation_action, 1.0, domain)
