@@ -38,7 +38,6 @@ class DisambiguationPolicy(Policy):
         self.fallback_default_confidence = 0.30
         self.disambiguation_action = "action_botfront_disambiguation"
         self.disambiguation_followup_action = "action_botfront_disambiguation_followup"
-        self.disambiguation_action_denial = "action_botfront_disambiguation_denial" # utter_ask_rephrase
         self.fallback_action = "action_botfront_fallback" # utter_fallback
         self.deny_suggestion_intent_name = "deny_suggestions"
         self.excluded_intents = excluded_intents + [self.deny_suggestion_intent_name]
@@ -127,16 +126,11 @@ class DisambiguationPolicy(Policy):
     def _is_user_input_expected(self, tracker: DialogueStateTracker) -> bool:
         return tracker.latest_action_name in [
             self.fallback_action,
-            self.disambiguation_action,
-            self.disambiguation_action_denial
+            self.disambiguation_action
         ]
     
     def _have_options_been_suggested(self, tracker: DialogueStateTracker) -> bool:
         return tracker.last_executed_action_has(self.disambiguation_action)
-
-    def _has_user_denied(self, parse_data) -> bool:
-        last_intent = parse_data["intent"].get("name", None)
-        return last_intent == self.deny_suggestion_intent_name
 
     def predict_action_probabilities(
         self, tracker: DialogueStateTracker, domain: Domain
@@ -155,10 +149,6 @@ class DisambiguationPolicy(Policy):
         if self._is_user_input_expected(tracker):
             # Shut up and listen
             result = confidence_scores_for("action_listen", 1.0, domain)
-
-        elif self._has_user_denied(parse_data):
-            logger.debug("User '{}' denied suggested intents.".format(tracker.sender_id))
-            result = confidence_scores_for(self.disambiguation_action_denial, 1.0, domain)
 
         elif should_fallback:
             logger.debug("Triggering fallback")

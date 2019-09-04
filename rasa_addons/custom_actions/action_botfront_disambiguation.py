@@ -58,18 +58,6 @@ class ActionBotfrontDisambiguationFollowup(Action):
 
         return revert_events
 
-
-class ActionBotfrontDisambiguationDenial(Action):
-    def name(self) -> Text:
-        return "action_botfront_disambiguation_denial"
-
-    def run(self,
-        dispatcher: "CollectingDispatcher",
-        tracker: "Tracker",
-        domain: Dict[Text, Any]
-    ) -> List["Event"]:
-        dispatcher.utter_template("utter_ask_rephrase", tracker)
-
 class ActionBotfrontFallback(Action):
     def name(self) -> Text:
         return "action_botfront_fallback"

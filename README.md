@@ -57,7 +57,7 @@ Float (default ``0.30``): if confidence of top-ranking intent is below this thre
 
 String (default ``'$0 < 2 * $1'``): if this expression holds, disambiguation is triggered. (If it has already been triggered on the previous turn, fallback is triggered instead.) Here this expression resolves to "the score of the top-ranking intent is below twice the score of the second-ranking intent". Disambiguation is an action that lets the user to choose from the top-ranking intents using a button prompt.
 
-In addition, an 'Other' option is shown with payload ``/deny_suggestions`` is shown. When this option is chosen, an action is triggered that utters the template ``utter_ask_rephrase`` and returns to the previous conversation state.
+In addition, an 'Other' option is shown with payload ``/deny_suggestions`` is shown. It is up to the conversation designer to implement a story to handle the continuation of this interaction.
 
 ### n_suggestions
 
