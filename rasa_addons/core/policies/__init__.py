@@ -1,2 +1,2 @@
-from rasa_addons.core.policies.disambiguation import DisambiguationPolicy
-from rasa_addons.core.policies.botfront_mapping import BotfrontMappingPolicy
+from rasa_addons.core.policies.disambiguation import BotfrontDisambiguationPolicy
+from rasa_addons.core.policies.mapping import BotfrontMappingPolicy

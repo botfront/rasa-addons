@@ -13,7 +13,7 @@ from rasa.core.trackers import DialogueStateTracker
 
 logger = logging.getLogger(__name__)
 
-class DisambiguationPolicy(Policy):
+class BotfrontDisambiguationPolicy(Policy):
 
     @staticmethod
     def _standard_featurizer():
@@ -31,7 +31,7 @@ class DisambiguationPolicy(Policy):
             "en": "Sorry, I'm not sure I understood. Did you mean..."
         }
     ) -> None:
-        super(DisambiguationPolicy, self).__init__(priority=priority)
+        super(BotfrontDisambiguationPolicy, self).__init__(priority=priority)
 
         self.disambiguation_trigger = disambiguation_trigger
         self.fallback_trigger = fallback_trigger
@@ -180,7 +180,7 @@ class DisambiguationPolicy(Policy):
     def persist(self, path: Text) -> None:
         """Persists the policy to storage."""
 
-        config_file = os.path.join(path, "disambiguation_policy.json")
+        config_file = os.path.join(path, "botfront_disambiguation_policy.json")
         meta = {
             "priority": self.priority,
             "disambiguation_trigger": self.disambiguation_trigger,
@@ -194,10 +194,10 @@ class DisambiguationPolicy(Policy):
         utils.dump_obj_as_json_to_file(config_file, meta)
 
     @classmethod
-    def load(cls, path: Text) -> "DisambiguationPolicy":
+    def load(cls, path: Text) -> "BotfrontDisambiguationPolicy":
         meta = {}
         if os.path.exists(path):
-            meta_path = os.path.join(path, "disambiguation_policy.json")
+            meta_path = os.path.join(path, "botfront_disambiguation_policy.json")
             if os.path.isfile(meta_path):
                 meta = json.loads(rasa.utils.io.read_file(meta_path))
 

@@ -74,3 +74,17 @@ class ActionBotfrontMapping(Action):
             events.append(SlotSet('latest_response_name', 'error_unknown_error'))
             dispatcher.utter_template("utter_fallback", tracker)
         return events
+
+class ActionBotfrontMappingFollowUp(Action):
+    
+    def name(self):
+        return 'action_botfront_mapping_follow_up'
+    
+    def run(self, dispatcher, tracker, domain):
+        action = tracker.get_slot('followup_response_name')
+        if action:
+            dispatcher.utter_template(action, tracker)
+        return [
+            SlotSet('followup_response_name', None),
+            SlotSet('latest_response_name', action)
+        ]
