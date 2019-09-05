@@ -42,7 +42,7 @@ class BotfrontDisambiguationPolicy(Policy):
         self.disambiguation_followup_action = "action_botfront_disambiguation_followup"
         self.fallback_action = "action_botfront_fallback" # utter_fallback
         self.deny_suggestions = deny_suggestions
-        self.excluded_intents = excluded_intents + [self.deny_suggestion_intent_name]
+        self.excluded_intents = excluded_intents + [self.deny_suggestions]
         self.n_suggestions = n_suggestions
         self.intent_mappings = intent_mappings
         self.disambiguation_title = disambiguation_title
