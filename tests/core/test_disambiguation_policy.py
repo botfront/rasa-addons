@@ -1,8 +1,8 @@
-from rasa_addons.core.policies.disambiguation import DisambiguationPolicy
+from rasa_addons.core.policies.disambiguation import BotfrontDisambiguationPolicy
 
 
 def test_should_not_trigger():
-    policy = DisambiguationPolicy(
+    policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger='$0 < 2 * $1',
         fallback_trigger=0.30
     )
@@ -14,7 +14,7 @@ def test_should_not_trigger():
 
 
 def test_should_trigger_disamb_only():
-    policy = DisambiguationPolicy(
+    policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger='$0 < 2 * $1',
         fallback_trigger=0.30
     )
@@ -26,7 +26,7 @@ def test_should_trigger_disamb_only():
 
 
 def test_should_trigger_fallback_only():
-    policy = DisambiguationPolicy(
+    policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger='$0 < 2 * $1',
         fallback_trigger=0.30
     )
@@ -37,7 +37,7 @@ def test_should_trigger_fallback_only():
     assert policy._should_fallback(intent_ranking, policy.fallback_trigger) is True
 
 def test_localization_and_entity_substitution():
-    policy = DisambiguationPolicy(
+    policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger='$0 < 2 * $1',
         fallback_trigger=0.30,
         intent_mappings={
@@ -106,7 +106,7 @@ def test_localization_and_entity_substitution():
     }
 
 def test_intent_exclusion():
-    policy = DisambiguationPolicy(
+    policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger='$0 < 2 * $1',
         fallback_trigger=0.30,
         excluded_intents=['^hola\..*'],
