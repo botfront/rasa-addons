@@ -4,6 +4,7 @@ import os
 from typing import Any, List, Text, Dict
 import rasa.utils.io
 import re
+from rasa.core.actions.action import ACTION_LISTEN_NAME
 
 from rasa.core import utils
 from rasa.core.domain import Domain
@@ -140,7 +141,7 @@ class BotfrontDisambiguationPolicy(Policy):
         entities = parse_data.get("entities", [])
         language = parse_data.get('language', 'en')
         intent_ranking = parse_data.get('intent_ranking', [])
-        can_apply = tracker.latest_action_name == "action_listen"
+        can_apply = tracker.latest_action_name == ACTION_LISTEN_NAME
         should_fallback = can_apply and self._should_fallback(intent_ranking, self.fallback_trigger)
         should_disambiguate = can_apply and self._should_disambiguate(
             intent_ranking, self.disambiguation_trigger
@@ -148,7 +149,7 @@ class BotfrontDisambiguationPolicy(Policy):
 
         if self._is_user_input_expected(tracker):
             # Shut up and listen
-            result = confidence_scores_for("action_listen", 1.0, domain)
+            result = confidence_scores_for(ACTION_LISTEN_NAME, 1.0, domain)
 
         elif should_fallback:
             logger.debug("Triggering fallback")
