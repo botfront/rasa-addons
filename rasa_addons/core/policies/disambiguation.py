@@ -25,6 +25,7 @@ class BotfrontDisambiguationPolicy(Policy):
         priority: int = 4,
         disambiguation_trigger: str = "$0 < 2 * $1",
         fallback_trigger: float = 0.30,
+        deny_suggestions: Text = "deny_suggestions",
         excluded_intents: List = [], # list of regex e.g ["^chitchat\..*", ...]
         intent_mappings: Dict[Text, Dict[Text, Text]] = {}, # {"basics.yes": {"en": "Yes", "fr": "Oui"}}
         n_suggestions: int = 3,
@@ -40,7 +41,7 @@ class BotfrontDisambiguationPolicy(Policy):
         self.disambiguation_action = "action_botfront_disambiguation"
         self.disambiguation_followup_action = "action_botfront_disambiguation_followup"
         self.fallback_action = "action_botfront_fallback" # utter_fallback
-        self.deny_suggestion_intent_name = "deny_suggestions"
+        self.deny_suggestions = deny_suggestions
         self.excluded_intents = excluded_intents + [self.deny_suggestion_intent_name]
         self.n_suggestions = n_suggestions
         self.intent_mappings = intent_mappings
@@ -69,7 +70,7 @@ class BotfrontDisambiguationPolicy(Policy):
         entities_json = json.dumps({e.get("entity"): e.get("value") for e in entities}) if len(entities) > 0 else ""
 
         message_title = self.disambiguation_title[language]
-        deny_text = self.intent_mappings.get(self.deny_suggestion_intent_name, {"en": "Something else"})[language]
+        deny_text = self.intent_mappings.get(self.deny_suggestions, {"en": "Something else"})[language]
 
         buttons = []
         for intent in mapped_intents:
@@ -79,7 +80,7 @@ class BotfrontDisambiguationPolicy(Policy):
 
         buttons.append({'title': deny_text,
                         'type': 'postback',
-                        'payload': '/{}'.format(self.deny_suggestion_intent_name)})
+                        'payload': '/{}'.format(self.deny_suggestions)})
         return {
             "title": message_title,
             "buttons": buttons
@@ -186,6 +187,7 @@ class BotfrontDisambiguationPolicy(Policy):
             "priority": self.priority,
             "disambiguation_trigger": self.disambiguation_trigger,
             "fallback_trigger": self.fallback_trigger,
+            "deny_suggestions": self.deny_suggestions,
             "excluded_intents": self.excluded_intents,
             "n_suggestions": self.n_suggestions,
             "intent_mappings": self.intent_mappings,

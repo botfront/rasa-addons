@@ -21,6 +21,7 @@ policies:
   - name: rasa_addons.core.policies.DisambiguationPolicy
     fallback_trigger: 0.30
     disambiguation_trigger: '$0 < 2 * $1'
+    deny_suggestions: 'deny_suggestions'
     n_suggestions: 3
     excluded_intents:
       - ^chitchat\..*
@@ -59,7 +60,11 @@ Float (default ``0.30``): if confidence of top-ranking intent is below this thre
 
 String (default ``'$0 < 2 * $1'``): if this expression holds, disambiguation is triggered. (If it has already been triggered on the previous turn, fallback is triggered instead.) Here this expression resolves to "the score of the top-ranking intent is below twice the score of the second-ranking intent". Disambiguation is an action that lets the user to choose from the top-ranking intents using a button prompt.
 
-In addition, an 'Other' option is shown with payload ``/deny_suggestions`` is shown. It is up to the conversation designer to implement a story to handle the continuation of this interaction.
+In addition, an 'Other' option is shown with payload defined in ``deny_suggestions`` param is shown. It is up to the conversation designer to implement a story to handle the continuation of this interaction.
+
+##### deny_suggestions
+
+String: the intent associated in the payload for the 'Other' option.
 
 ##### n_suggestions
 
