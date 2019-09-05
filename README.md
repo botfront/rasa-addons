@@ -11,9 +11,9 @@ A set of 🚀🚀🚀 components to be used with Botfront and/or Rasa.
 
 This policy implements fallback and suggestion-based disambiguation.
 
-It works with the actions in ``rasa_addons.custom_actions``.
+It works with actions ``rasa_addons.core.actions.ActionBotfrontDisambiguation``, ``rasa_addons.core.actions.ActionBotfrontDisambiguationFollowup`` and ``rasa_addons.core.actions.ActionBotfrontDisambiguationFollowup``.
 
-## Example usage
+### Example usage
 
 ```
 policies:
@@ -49,30 +49,54 @@ policies:
 ...
 ```
 
-### fallback_trigger
+### Parameters
+
+##### fallback_trigger
 
 Float (default ``0.30``): if confidence of top-ranking intent is below this threshold, fallback is triggered. Fallback is an action that utters the template ``utter_fallback`` and returns to the previous conversation state.
 
-### disambiguation_trigger
+##### disambiguation_trigger
 
 String (default ``'$0 < 2 * $1'``): if this expression holds, disambiguation is triggered. (If it has already been triggered on the previous turn, fallback is triggered instead.) Here this expression resolves to "the score of the top-ranking intent is below twice the score of the second-ranking intent". Disambiguation is an action that lets the user to choose from the top-ranking intents using a button prompt.
 
 In addition, an 'Other' option is shown with payload ``/deny_suggestions`` is shown. It is up to the conversation designer to implement a story to handle the continuation of this interaction.
 
-### n_suggestions
+##### n_suggestions
 
 Int (default 3): the maximum number of suggestions to display (excluding the 'Other' option).
 
-### excluded_intents
+##### excluded_intents
 
 List (regex string): any intent (exactly) matching one of these regular expressions will not be shown as a suggestion.
 
-### disambiguation_title
+##### disambiguation_title
 
 Dict (language string -> string): localized disambiguation message title.
 
-### intent_mappings
+##### intent_mappings
 
 Dict (intent string -> language string -> string): localized representative button title for intents. If no title is defined for a given intent, the intent name is rendered instead. These titles support entity substitution: any entity name enclosed in curly brackets (``{entity}``) will be filled with entity information from the user utterance.
 
 _Important:_ The title for the 'Other' option is also defined here.
+
+## Mapping Policy
+
+This policy implements regular expression-based direct mapping from intent to action.
+
+### Example usage
+
+```
+policies:
+...
+  - name: rasa_addons.core.policies.BotfrontMappingPolicy
+    triggers:
+      - trigger: '^map\..+'
+        action: 'action_botfront_mapping'
+        extra_actions:
+          - 'action_myaction'
+...
+```
+
+### ActionBotfrontMapping
+
+The default action ActionBotfrontMapping takes the intent that triggered the mapping policy, e.g. ``map.my_intent`` and tries to generate the template ``utter_map.my_intent``.
