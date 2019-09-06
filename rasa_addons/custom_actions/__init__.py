@@ -1,2 +1,0 @@
-from rasa_addons.custom_actions.action_botfront_mapping import ActionBotfrontMapping
-from rasa_addons.custom_actions.action_botfront_mapping_follow_up import ActionBotfrontMappingFollowUp
