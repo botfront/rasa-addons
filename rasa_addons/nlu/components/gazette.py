@@ -21,8 +21,8 @@ class Gazette(Component):
     }
 
     def __init__(self,
-                 component_config: Text = None,
-                 gazette: Optional[Dict] = None) -> None:
+        component_config: Text = None,
+        gazette: Optional[Dict] = None) -> None:
 
         super(Gazette, self).__init__(component_config)
         self.gazette = gazette if gazette else {}
@@ -63,12 +63,12 @@ class Gazette(Component):
 
     @classmethod
     def load(cls,
-             component_meta: Dict[Text, Any],
-             model_dir: Text = None,
-             model_metadata: Metadata = None,
-             cached_component: Optional['Gazette'] = None,
-             **kwargs: Any
-             ) -> 'Gazette':
+        component_meta: Dict[Text, Any],
+        model_dir: Text = None,
+        model_metadata: Metadata = None,
+        cached_component: Optional['Gazette'] = None,
+        **kwargs: Any
+    ) -> 'Gazette':
         from rasa.nlu.utils import read_json_file
 
         td = read_json_file(os.path.join(model_dir, "training_data.json"))
