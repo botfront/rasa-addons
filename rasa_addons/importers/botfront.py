@@ -12,6 +12,7 @@ from rasa.importers import utils
 from rasa.importers.importer import TrainingDataImporter
 from rasa.nlu.training_data import TrainingData
 from rasa.utils import io as io_utils
+from  rasa.core.utils import get_file_hash
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,11 @@ class BotfrontFileImporter(TrainingDataImporter):
             exclusion_percentage,
         )
         return StoryGraph(story_steps)
+
+    async def get_stories_hash(self):
+        # Use a file hash of stories file to figure out Core fingerprint, instead of
+        # storygraph object hash which is unstable
+        return get_file_hash(self._stories_path)
 
     async def get_nlu_data(self, languages = True) -> Dict[Text, TrainingData]:
         if isinstance(languages, str) and languages.startswith('data_for_'):
