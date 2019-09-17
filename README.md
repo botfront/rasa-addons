@@ -7,7 +7,7 @@ A set of 🚀🚀🚀 components to be used with Botfront and/or Rasa.
 
 [Botfront](https://github.com/botfront/botfront) is an open source chatbot platform built with Rasa.
 
-## Disambiguation Policy
+## rasa_addons.core.policies.BotfrontDisambiguationPolicy
 
 This policy implements fallback and suggestion-based disambiguation.
 
@@ -18,7 +18,7 @@ It works with actions ``rasa_addons.core.actions.ActionBotfrontDisambiguation``,
 ```
 policies:
 ...
-  - name: rasa_addons.core.policies.DisambiguationPolicy
+  - name: rasa_addons.core.policies.BotfrontDisambiguationPolicy
     fallback_trigger: 0.30
     disambiguation_trigger: '$0 < 2 * $1'
     deny_suggestions: 'deny_suggestions'
@@ -84,7 +84,7 @@ Dict (intent string -> language string -> string): localized representative butt
 
 _Important:_ The title for the 'Other' option is also defined here.
 
-## Mapping Policy
+## rasa_addons.core.policies.BotfrontMappingPolicy
 
 This policy implements regular expression-based direct mapping from intent to action.
 
@@ -105,3 +105,29 @@ policies:
 ### ActionBotfrontMapping
 
 The default action ActionBotfrontMapping takes the intent that triggered the mapping policy, e.g. ``map.my_intent`` and tries to generate the template ``utter_map.my_intent``.
+
+## rasa_addons.core.channels.rest.RestInput
+
+### Example usage
+
+```
+credentials:
+...
+rasa_addons.core.channels.webchat.WebchatInput:
+  session_persistence: true
+  base_url: {{rasa_url}}
+  socket_path: '/socket.io/'
+...
+```
+
+## rasa_addons.core.channels.webchat.WebchatInput
+
+### Example usage
+
+```
+credentials:
+...
+rasa_addons.core.channels.rest.RestInput:
+  # POST {{rasa_url}}/webhooks/rest/
+...
+```
