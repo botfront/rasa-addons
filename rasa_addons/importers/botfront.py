@@ -78,8 +78,15 @@ class BotfrontFileImporter(TrainingDataImporter):
             return utils.training_data_from_paths([self.nlu_config[lang]['path']], 'xx')
         if not isinstance(languages, list):
             languages = self.nlu_config.keys()
-        return {lang: utils.training_data_from_paths([self.nlu_config[lang]['path']], 'xx')
-                for lang in languages}
+        td = {}
+        for lang in languages:
+            try:
+                td[lang] = utils.training_data_from_paths([self.nlu_config[lang]['path']], 'xx')
+            except ValueError as e:
+                if str(e).startswith("Unknown data format"):
+                    from rasa.nlu.training_data import TrainingData
+                    td[lang] = TrainingData()
+        return td
 
     async def get_domain(self) -> Domain:
         domain = Domain.empty()
