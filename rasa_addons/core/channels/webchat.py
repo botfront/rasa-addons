@@ -73,6 +73,7 @@ class WebchatOutput(OutputChannel):
         for button in buttons:
             message["quick_replies"].append(
                 {
+                    "type": button["type"],
                     "content_type": "text",
                     "title": button["title"],
                     "payload": button["payload"],
