@@ -11,7 +11,7 @@ A set of 🚀🚀🚀 components to be used with Botfront and/or Rasa.
 
 This policy implements fallback and suggestion-based disambiguation.
 
-It works with actions ``rasa_addons.core.actions.ActionBotfrontDisambiguation``, ``rasa_addons.core.actions.ActionBotfrontDisambiguationFollowup`` and ``rasa_addons.core.actions.ActionBotfrontDisambiguationFollowup``.
+It works with actions ``rasa_addons.core.actions.ActionBotfrontDisambiguation``, ``rasa_addons.core.actions.ActionBotfrontDisambiguationFollowup`` and ``rasa_addons.core.actions.ActionBotfrontFallback``.
 
 ### Example usage
 
@@ -106,7 +106,7 @@ policies:
 
 The default action ActionBotfrontMapping takes the intent that triggered the mapping policy, e.g. ``map.my_intent`` and tries to generate the template ``utter_map.my_intent``.
 
-## rasa_addons.core.channels.rest.RestInput
+## rasa_addons.core.channels.webchat.WebchatInput
 
 ### Example usage
 
@@ -120,7 +120,7 @@ rasa_addons.core.channels.webchat.WebchatInput:
 ...
 ```
 
-## rasa_addons.core.channels.webchat.WebchatInput
+## rasa_addons.core.channels.rest.RestInput
 
 ### Example usage
 
