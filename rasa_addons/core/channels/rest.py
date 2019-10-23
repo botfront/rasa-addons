@@ -83,7 +83,7 @@ class RestOutput(OutputChannel):
         **kwargs: Any
     ) -> None:
         await self._persist_message(
-            self._message(recipient_id, text=text, buttons=buttons)
+            self._message(recipient_id, text=text, quick_replies=buttons)
         )
 
     async def send_custom_json(
