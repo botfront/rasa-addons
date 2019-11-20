@@ -48,15 +48,21 @@ class WebchatOutput(OutputChannel):
         self, recipient_id: Text, text: Text, **kwargs: Any
     ) -> None:
         """Send a message through this channel."""
-
-        await self._send_message(self.sid, {"text": text})
+        if 'metadata' in kwargs.keys():
+            await self._send_message(self.sid, {"text": text, "metadata": kwargs["metadata"]})
+        else:
+            await self._send_message(self.sid, {"text": text})
+ 
 
     async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
     ) -> None:
         """Sends an image to the output"""
 
-        message = {"attachment": {"type": "image", "payload": {"src": image}}}
+        if 'metadata' in kwargs.keys():
+            message = {"attachment": {"type": "image", "payload": {"src": image}}, "metadata": kwargs["metadata"]}
+        else:
+            message = {"attachment": {"type": "image", "payload": {"src": image}}}
         await self._send_message(self.sid, message)
 
     async def send_text_with_buttons(
@@ -68,7 +74,10 @@ class WebchatOutput(OutputChannel):
     ) -> None:
         """Sends buttons to the output."""
 
-        message = {"text": text, "quick_replies": []}
+        if 'metadata' in kwargs.keys():
+            message = {"text": text, "quick_replies": [], "metadata": kwargs["metadata"]}
+        else:
+            message = {"text": text, "quick_replies": []}
 
         for button in buttons:
             message["quick_replies"].append(
@@ -86,13 +95,21 @@ class WebchatOutput(OutputChannel):
             self, recipient_id: Text, elements: Iterable[Dict[Text, Any]], **kwargs: Any
     ) -> None:
         """Sends elements to the output."""
-
-        message = {
-            "attachment": {
-                "type": "template",
-                "payload": {"template_type": "generic", "elements": elements[0]},
+        if 'metadata' in kwargs.keys():
+            message = {
+                "attachment": {
+                    "type": "template",
+                    "payload": {"template_type": "generic", "elements": elements[0]},
+                    "metadata": kwargs["metadata"],
+                }
             }
-        }
+        else:
+            message = {
+                "attachment": {
+                    "type": "template",
+                    "payload": {"template_type": "generic", "elements": elements[0]},
+                }
+            }
 
         await self._send_message(self.sid, message)
 

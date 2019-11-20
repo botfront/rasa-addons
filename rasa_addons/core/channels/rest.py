@@ -30,7 +30,7 @@ class RestOutput(OutputChannel):
 
     @staticmethod
     def _message(
-        recipient_id, text=None, image=None, buttons=None, attachment=None, custom=None
+        recipient_id, text=None, image=None, buttons=None, attachment=None, custom=None, metadata=None
     ):
         """Create a message object that will be stored."""
 
@@ -41,6 +41,7 @@ class RestOutput(OutputChannel):
             "quick_replies": buttons,
             "attachment": attachment,
             "custom": custom,
+            "metadata": metadata,
         }
 
         # filter out any values that are `None`
@@ -59,7 +60,10 @@ class RestOutput(OutputChannel):
         self, recipient_id: Text, text: Text, **kwargs: Any
     ) -> None:
         for message_part in text.split("\n\n"):
-            await self._persist_message(self._message(recipient_id, text=message_part))
+            if 'metadata' in kwargs.keys():
+                await self._persist_message(self._message(recipient_id, text=message_part, metadata=kwargs["metadata"]))
+            else:
+                await self._persist_message(self._message(recipient_id, text=message_part))
 
     async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
@@ -82,9 +86,14 @@ class RestOutput(OutputChannel):
         buttons: List[Dict[Text, Any]],
         **kwargs: Any
     ) -> None:
-        await self._persist_message(
-            self._message(recipient_id, text=text, buttons=buttons)
-        )
+        if 'metadata' in kwargs.keys():
+            await self._persist_message(
+                self._message(recipient_id, text=text, buttons=buttons, metadata=kwargs["metadata"])
+            )
+        else:
+            await self._persist_message(
+                self._message(recipient_id, text=text, buttons=buttons)
+            )
 
     async def send_custom_json(
         self, recipient_id: Text, json_message: Dict[Text, Any], **kwargs: Any
