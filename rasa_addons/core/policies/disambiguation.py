@@ -6,7 +6,6 @@ import rasa.utils.io
 import re
 from rasa.core.actions.action import ACTION_LISTEN_NAME
 
-from rasa.core import utils
 from rasa.core.domain import Domain
 from rasa.core.policies.policy import Policy, confidence_scores_for
 from rasa.core.events import SlotSet
@@ -194,7 +193,7 @@ class BotfrontDisambiguationPolicy(Policy):
             "disambiguation_title": self.disambiguation_title
         }
         rasa.utils.io.create_directory_for_file(config_file)
-        utils.dump_obj_as_json_to_file(config_file, meta)
+        rasa.utils.io.dump_obj_as_json_to_file(config_file, meta)
 
     @classmethod
     def load(cls, path: Text) -> "BotfrontDisambiguationPolicy":

@@ -26,6 +26,6 @@ class ActionBotfrontMapping(Action):
         events = []
         response_name = 'utter_' + tracker.latest_message.intent["name"]
         events += [create_bot_utterance(m) for m in await nlg.generate(response_name, tracker, output_channel.name(),
-                   language=output_channel.language)]
+                   language=tracker.latest_message.metadata["language"])]
 
         return events

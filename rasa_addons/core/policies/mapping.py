@@ -7,7 +7,6 @@ from typing import Any, List, Text, Dict
 
 import rasa.utils.io
 
-from rasa.core import utils
 from rasa.core.actions.action import (
     ACTION_BACK_NAME,
     ACTION_LISTEN_NAME,
@@ -125,7 +124,7 @@ class BotfrontMappingPolicy(Policy):
             "triggers": self.triggers
         }
         rasa.utils.io.create_directory_for_file(config_file)
-        utils.dump_obj_as_json_to_file(config_file, meta)
+        rasa.utils.io.dump_obj_as_json_to_file(config_file, meta)
 
     @classmethod
     def load(cls, path: Text) -> "BotfrontMappingPolicy":
