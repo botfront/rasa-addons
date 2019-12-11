@@ -111,7 +111,7 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
             tracker,
             output_channel,
             **kwargs,
-            language=tracker.latest_message.metadata["language"],
+            language=tracker.latest_message.metadata.get("language"),
             projectId=os.environ.get("BF_PROJECT_ID"),
         )
 
