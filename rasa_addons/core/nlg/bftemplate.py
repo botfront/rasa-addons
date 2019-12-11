@@ -25,7 +25,7 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
         for template in self.templates[utter_action]:
             if template.get("language") != kwargs.get("language"):
                 continue
-            if output_channel in template.get("channel", []):
+            if template.get("channel") == output_channel:
                 channel_templates.append(template)
             elif not template.get("channel"):
                 default_templates.append(template)
@@ -53,8 +53,6 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
 
             if suitable_templates:
                 template = np.random.choice(suitable_templates)
-                # fill in metadata
-                template["metadata"] = self.templates[utter_action].get("metadata")
                 return template
             else:
                 return None
