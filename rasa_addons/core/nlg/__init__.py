@@ -1,0 +1,2 @@
+from rasa_addons.core.nlg.graphql import GraphQLNaturalLanguageGenerator
+from rasa_addons.core.nlg.bftemplate import BotfrontTemplatedNaturalLanguageGenerator
