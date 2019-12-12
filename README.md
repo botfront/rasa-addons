@@ -131,3 +131,22 @@ rasa_addons.core.channels.rest.RestInput:
   # POST {{rasa_url}}/webhooks/rest/
 ...
 ```
+
+## rasa_addons.core.nlg.BotfrontTemplatedNaturalLanguageGenerator
+
+Idential to Rasa's `TemplatedNaturalLanguageGenerator`, except in handles templates with a language key.
+
+## rasa_addons.core.nlg.GraphQLNaturalLanguageGenerator
+
+The new standard way to connect to the Botfront NLG endpoint. Note that support for the legacy REST endpoint is maintained for the moment. This feature is accessed by supplying a URL that doesn't contain the substring "graphql".
+
+### Example usage
+
+```
+endpoints:
+...
+nlg:
+  url: 'http://localhost:3000/graphql'
+  type: 'rasa_addons.core.nlg.GraphQLNaturalLanguageGenerator'
+...
+```
