@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 NLG_QUERY = """
 query(
-    $template: String!
+    $template: StringOrListOfStrings!
     $arguments: NlgRequestArguments!
     $tracker: ConversationInput
     $channel: NlgRequestChannel
