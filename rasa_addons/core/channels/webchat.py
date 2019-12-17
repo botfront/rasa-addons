@@ -29,9 +29,12 @@ class WebchatOutput(SocketIOOutput):
     ) -> None:
         """Send a message through this channel."""
 
-        await self._send_message(
-            self.sid, {"text": text, "metadata": kwargs.get("metadata", {})}
-        )
+        message_parts = text.split("\n\n")
+        for i in range(len(message_parts)):
+            text_message = {"text": message_parts[i]}
+            if i == len(message_parts) - 1:
+                text_message["metadata"] = kwargs.get("metadata", {})
+            await self._send_message(self.sid, text_message)
 
     async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
