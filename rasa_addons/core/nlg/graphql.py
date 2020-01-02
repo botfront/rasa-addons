@@ -40,7 +40,7 @@ def nlg_response_format_spec():
     return {
         "type": "object",
         "properties": {
-            "text": {"type": "string"},
+            "text": {"type": ["array", "null"]},
             "buttons": {"type": ["array", "null"], "items": {"type": "object"}},
             "elements": {"type": ["array", "null"], "items": {"type": "object"}},
             "attachment": {"type": ["object", "null"]},
