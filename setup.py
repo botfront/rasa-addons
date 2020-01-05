@@ -6,12 +6,12 @@ with io.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md
     long_description = f.read()
 setup(
     name='rasa_addons',
-    version='0.8.6',
+    version='0.9.0',
     author='Botfront',
     description="Rasa Addons - Components for Rasa and Botfront",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=['pyyaml', 'requests', 'requests_futures', 'fuzzy_matcher'],
+    install_requires=['pyyaml', 'requests', 'requests_futures', 'fuzzy_matcher', 'fbmessenger'],
     packages=find_packages(exclude=["tests"]),
     licence='Apache 2.0',
     url='https://botfront.io',
