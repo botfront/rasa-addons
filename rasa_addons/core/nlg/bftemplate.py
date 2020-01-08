@@ -33,8 +33,7 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
         # always prefer channel specific templates over default ones
         if channel_templates:
             return channel_templates
-        else:
-            return default_templates
+        return default_templates
 
     # noinspection PyUnusedLocal
     def _random_template_for(
@@ -47,15 +46,15 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
         import numpy as np
 
         if utter_action in self.templates:
-            suitable_templates = self._templates_for_utter_action(
-                utter_action, output_channel, **kwargs
-            )
+            for language in [kwargs.get("language"), kwargs.get("fallback_language")]:
+                suitable_templates = self._templates_for_utter_action(
+                    utter_action, output_channel, language=language
+                )
 
-            if suitable_templates:
-                template = np.random.choice(suitable_templates)
-                return template
-            else:
-                return None
+                if suitable_templates:
+                    template = np.random.choice(suitable_templates)
+                    return template
+            return None
         else:
             return None
 
@@ -69,12 +68,18 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
         """Generate a response for the requested template."""
 
         filled_slots = tracker.current_slot_values()
+
+        fallback_language_slot = tracker.slots.get("fallback_language")
+        fallback_language = fallback_language_slot.initial_value if fallback_language_slot else None
+        language = tracker.latest_message.metadata.get("language") or fallback_language
+
         return self.generate_from_slots(
             template_name,
             filled_slots,
             output_channel,
             **kwargs,
-            language=tracker.latest_message.metadata["language"],
+            language=language,
+            fallback_language=fallback_language,
         )
 
     def generate_from_slots(
@@ -94,7 +99,7 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
         if r is not None:
             return self._fill_template(r, filled_slots, **kwargs)
         else:
-            return None
+            return {"text": template_name}
 
     def _fill_template(
         self,

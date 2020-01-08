@@ -106,12 +106,16 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
         **kwargs: Any,
     ) -> List[Dict[Text, Any]]:
 
+        fallback_language_slot = tracker.slots.get("fallback_language")
+        fallback_language = fallback_language_slot.initial_value if fallback_language_slot else None
+        language = tracker.latest_message.metadata.get("language") or fallback_language
+
         body = nlg_request_format(
             template_name,
             tracker,
             output_channel,
             **kwargs,
-            language=tracker.latest_message.metadata.get("language"),
+            language=language,
             projectId=os.environ.get("BF_PROJECT_ID"),
         )
 
@@ -133,13 +137,13 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
                 response = response[0]  # legacy route, use first message in seq
         except Exception as e:
             logger.error("NLG web endpoint returned an invalid response: {}".format(e))
-            return [{"text": template_name}]
+            return {"text": template_name}
 
         if self.validate_response(response):
             return response
         else:
             logger.error("NLG web endpoint returned an invalid response.")
-            return [{"text": template_name}]
+            return {"text": template_name}
 
     @staticmethod
     def validate_response(content: Optional[Dict[Text, Any]]) -> bool:
