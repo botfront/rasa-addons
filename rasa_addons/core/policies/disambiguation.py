@@ -138,8 +138,9 @@ class BotfrontDisambiguationPolicy(Policy):
     ) -> List[float]:
 
         parse_data = tracker.latest_message.parse_data
+        metadata = tracker.latest_message.metadata
         entities = parse_data.get("entities", [])
-        language = parse_data.get('language', 'en')
+        language = metadata.get("language", "en")
         intent_ranking = parse_data.get('intent_ranking', [])
         can_apply = tracker.latest_action_name == ACTION_LISTEN_NAME
         should_fallback = can_apply and self._should_fallback(intent_ranking, self.fallback_trigger)

@@ -1,5 +1,6 @@
 import os
 import warnings
+import rasa
 
 from typing import Any, Text, Dict, Optional
 
@@ -69,9 +70,7 @@ class Gazette(Component):
         cached_component: Optional['Gazette'] = None,
         **kwargs: Any
     ) -> 'Gazette':
-        from rasa.nlu.utils import read_json_file
-
-        td = read_json_file(os.path.join(model_dir, "training_data.json"))
+        td = rasa.utils.io.read_json_file(os.path.join(model_dir, "training_data.json"))
         if "gazette" in td["rasa_nlu_data"]:
             gazette = cls._load_gazette_list(td["rasa_nlu_data"]["gazette"])
         else:
