@@ -59,17 +59,9 @@ class WebchatOutput(SocketIOOutput):
         message = {
             "text": text,
             "quick_replies": [],
+            "quick_replies": buttons,
             "metadata": kwargs.get("metadata", {}),
         }
-
-        for button in buttons:
-            message["quick_replies"].append(
-                {
-                    "content_type": "text",
-                    "title": button["title"],
-                    "payload": button["payload"],
-                }
-            )
 
         await self._send_message(self.sid, message)
 
