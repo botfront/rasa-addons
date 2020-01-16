@@ -6,7 +6,7 @@ with io.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md
     long_description = f.read()
 setup(
     name='rasa_addons',
-    version='0.9.3',
+    version='0.9.4',
     author='Botfront',
     description="Rasa Addons - Components for Rasa and Botfront",
     long_description=long_description,
