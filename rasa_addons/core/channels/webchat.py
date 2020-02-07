@@ -103,6 +103,17 @@ class WebchatOutput(SocketIOOutput):
 
 class WebchatInput(SocketIOInput):
     @classmethod
+    def from_credentials(cls, credentials: Optional[Dict[Text, Any]]) -> InputChannel:
+        return cls(
+            credentials.get("user_message_evt", "user_uttered"),
+            credentials.get("bot_message_evt", "bot_uttered"),
+            credentials.get("namespace"),
+            credentials.get("session_persistence", False),
+            credentials.get("socketio_path", "/socket.io"),
+            credentials.get("cors_allowed_origins", "*"),
+        )
+
+    @classmethod
     def name(cls):
         return "webchat"
 
