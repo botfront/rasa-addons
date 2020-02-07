@@ -8,7 +8,7 @@ from socketio import AsyncServer
 
 from typing import Text, List, Dict, Any, Optional, Callable, Iterable, Awaitable
 
-from rasa.core.channels.channel import UserMessage
+from rasa.core.channels.channel import UserMessage, InputChannel
 from rasa.core.channels.socketio import SocketIOInput, SocketIOOutput, SocketBlueprint
 
 logger = logging.getLogger(__name__)
