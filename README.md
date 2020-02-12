@@ -120,15 +120,15 @@ rasa_addons.core.channels.webchat.WebchatInput:
 ...
 ```
 
-## rasa_addons.core.channels.rest.RestInput
+## rasa_addons.core.channels.rest.BotfrontRestInput
 
 ### Example usage
 
 ```
 credentials:
 ...
-rasa_addons.core.channels.rest.RestInput:
-  # POST {{rasa_url}}/webhooks/rest/
+rasa_addons.core.channels.rest.BotfrontRestInput:
+  # POST {{rasa_url}}/webhooks/rest/webhook/
 ...
 ```
 
