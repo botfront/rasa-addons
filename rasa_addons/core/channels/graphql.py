@@ -23,6 +23,7 @@ query(
 }
 """
 
+
 async def get_config_via_graphql(bf_url, project_id):
     from sgqlc.endpoint.http import HTTPEndpoint
     import urllib.error
@@ -31,12 +32,15 @@ async def get_config_via_graphql(bf_url, project_id):
 
     async def load():
         try:
-            logger.debug(f'fetching endpoints and credentials at {bf_url}')
+            logger.debug(f"fetching endpoints and credentials at {bf_url}")
             response = endpoint(CONFIG_QUERY, {"projectId": project_id})
-            if "errors" in response and response["errors"]: raise urllib.error.URLError("Null response.")
+            if "errors" in response and response["errors"]:
+                raise urllib.error.URLError("Null response.")
             return endpoint(CONFIG_QUERY, {"projectId": project_id})["data"]
         except urllib.error.URLError:
-            logger.debug(f'something went wrong at {bf_url} with the query {CONFIG_QUERY}')
+            logger.debug(
+                f"something went wrong at {bf_url} with the query {CONFIG_QUERY}"
+            )
             return None
 
     data = await load()

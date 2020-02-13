@@ -2,7 +2,12 @@ import asyncio
 import rasa
 import logging
 import inspect
-from rasa.core.channels.channel import RestInput, UserMessage, CollectingOutputChannel, InputChannel
+from rasa.core.channels.channel import (
+    RestInput,
+    UserMessage,
+    CollectingOutputChannel,
+    InputChannel,
+)
 from sanic.request import Request
 from sanic import Sanic, Blueprint, response
 from asyncio import Queue, CancelledError
@@ -14,15 +19,13 @@ from rasa.utils.endpoints import EndpointConfig
 
 logger = logging.getLogger(__name__)
 
+
 class BotfrontRestPlusInput(BotfrontRestInput):
     @classmethod
     def from_credentials(cls, credentials: Optional[Dict[Text, Any]]) -> InputChannel:
         return cls(**credentials)
 
-    def __init__(
-        self,
-        config = {}
-    ):
+    def __init__(self, config={}):
         self.config = config
 
     def blueprint(

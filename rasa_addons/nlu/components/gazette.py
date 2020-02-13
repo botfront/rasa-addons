@@ -11,23 +11,22 @@ from rasa.nlu.model import Metadata
 
 from fuzzy_matcher import process
 
+
 class Gazette(Component):
     name = "Gazette"
 
     provides = ["entities"]
 
-    defaults = {
-        "max_num_suggestions": 5,
-        "entities": [],
-    }
+    defaults = {"max_num_suggestions": 5, "entities": []}
 
-    def __init__(self,
-        component_config: Text = None,
-        gazette: Optional[Dict] = None) -> None:
+    def __init__(
+        self, component_config: Text = None, gazette: Optional[Dict] = None
+    ) -> None:
 
         super(Gazette, self).__init__(component_config)
         self.gazette = gazette if gazette else {}
-        if gazette: self._load_config()
+        if gazette:
+            self._load_config()
         self.limit = self.component_config.get("max_num_suggestions")
         self.entities = self.component_config.get("entities", [])
 
@@ -46,13 +45,15 @@ class Gazette(Component):
                 entity["value"],
                 self.gazette.get(entity["entity"], []),
                 limit=self.limit,
-                scorer=config["mode"]
+                scorer=config["mode"],
             )
             primary, score = matches[0] if len(matches) else (None, None)
 
             if primary is not None and score > config["min_score"]:
                 entity["value"] = primary
-                entity["gazette_matches"] = [{"value": value, "score": num} for value, num in matches]
+                entity["gazette_matches"] = [
+                    {"value": value, "score": num} for value, num in matches
+                ]
                 new_entities.append(entity)
 
         message.set("entities", new_entities)
@@ -63,13 +64,14 @@ class Gazette(Component):
         self.gazette = self._load_gazette_list(training_data.gazette)
 
     @classmethod
-    def load(cls,
+    def load(
+        cls,
         component_meta: Dict[Text, Any],
         model_dir: Text = None,
         model_metadata: Metadata = None,
-        cached_component: Optional['Gazette'] = None,
+        cached_component: Optional["Gazette"] = None,
         **kwargs: Any
-    ) -> 'Gazette':
+    ) -> "Gazette":
         td = rasa.utils.io.read_json_file(os.path.join(model_dir, "training_data.json"))
         if "gazette" in td["rasa_nlu_data"]:
             gazette = cls._load_gazette_list(td["rasa_nlu_data"]["gazette"])
@@ -98,8 +100,16 @@ class Gazette(Component):
     def _load_config(self):
         entities = []
         for rep in self.component_config.get("entities", []):
-            assert "name" in rep, "Must provide the entity name for the gazette entity configuration: {}".format(rep)
-            assert rep["name"] in self.gazette, "Could not find entity name {0} in gazette {1}".format(rep["name"], self.gazette)
+            assert (
+                "name" in rep
+            ), "Must provide the entity name for the gazette entity configuration: {}".format(
+                rep
+            )
+            assert (
+                rep["name"] in self.gazette
+            ), "Could not find entity name {0} in gazette {1}".format(
+                rep["name"], self.gazette
+            )
 
             supported_properties = ["mode", "min_score"]
             defaults = ["ratio", 80]

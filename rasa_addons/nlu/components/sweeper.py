@@ -17,11 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class Sweeper(Component):
-    name = 'Sweeper'
+    name = "Sweeper"
 
-    defaults = {
-        'entity_names': []
-    }
+    defaults = {"entity_names": []}
 
     def __init__(self, component_config=None):
         # type: (RasaNLUModelConfig) -> None
@@ -31,6 +29,11 @@ class Sweeper(Component):
         # type: (Message, **Any) -> None
 
         message_entities = message.get("entities")
-        sweeped_entities = list(filter(lambda e: e["entity"] not in self.component_config["entity_names"], message_entities))
+        sweeped_entities = list(
+            filter(
+                lambda e: e["entity"] not in self.component_config["entity_names"],
+                message_entities,
+            )
+        )
         message.set("entities", sweeped_entities)
 

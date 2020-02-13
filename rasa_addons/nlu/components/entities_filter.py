@@ -23,9 +23,7 @@ class EntitiesFilter(Component):
 
     name = "EntitiesFilter"
     provides = ["entities"]
-    defaults = {
-        "entities": {}
-    }
+    defaults = {"entities": {}}
 
     def __init__(self, component_config=None):
         # type: (Text, Optional[List[Text]]) -> None
@@ -35,7 +33,7 @@ class EntitiesFilter(Component):
     @classmethod
     def create(
         cls, component_config: Dict[Text, Any], config: RasaNLUModelConfig
-    ) -> 'EntitiesFilter':
+    ) -> "EntitiesFilter":
         return cls(component_config)
 
     def process(self, message, **kwargs):
@@ -48,21 +46,29 @@ class EntitiesFilter(Component):
 
         # get crf and duckling entities
         message_entities = message.get("entities")
-        entities_to_filter = filter(lambda e: e["extractor"] in ["ner_crf", "ner_duckling_http"], message_entities)
+        entities_to_filter = filter(
+            lambda e: e["extractor"] in ["ner_crf", "ner_duckling_http"],
+            message_entities,
+        )
         indices_to_remove = []
         for index, entity in enumerate(entities_to_filter):
-            if intent["name"] in self.component_config["entities"].keys() and entity["entity"] not in self.component_config["entities"][intent["name"]]:
+            if (
+                intent["name"] in self.component_config["entities"].keys()
+                and entity["entity"]
+                not in self.component_config["entities"][intent["name"]]
+            ):
                 indices_to_remove.append(index)
 
         for i in sorted(indices_to_remove, reverse=True):
             del message.get("entities")[i]
 
     @classmethod
-    def load(cls,
-             component_meta: Dict[Text, Any],
-             model_dir: Text = None,
-             model_metadata: Metadata = None,
-             cached_component: Optional['EntitiesFilter'] = None,
-             **kwargs: Any
-             ) -> 'EntitiesFilter':
+    def load(
+        cls,
+        component_meta: Dict[Text, Any],
+        model_dir: Text = None,
+        model_metadata: Metadata = None,
+        cached_component: Optional["EntitiesFilter"] = None,
+        **kwargs: Any
+    ) -> "EntitiesFilter":
         return cls(component_meta)

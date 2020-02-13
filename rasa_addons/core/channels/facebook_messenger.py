@@ -17,8 +17,8 @@ from sanic.response import HTTPResponse
 
 logger = logging.getLogger(__name__)
 
-class FBMessengerInput(FacebookInput):
 
+class FBMessengerInput(FacebookInput):
     @classmethod
     def from_credentials(cls, credentials):
         if not credentials:
@@ -37,18 +37,17 @@ class FBMessengerInput(FacebookInput):
 
     @staticmethod
     def get_language(user):
-        if 'locale' in user:
-            split = user['locale'].split('_')
+        if "locale" in user:
+            split = user["locale"].split("_")
             if len(split) > 0:
                 return split[0]
         return None
 
     def get_metadata(self, request: Request):
         messenger = Messenger(self.fb_access_token, None)
-        sender_id = request.json.get('entry')[0].get('messaging')[0].get('sender').get('id')
+        sender_id = (
+            request.json.get("entry")[0].get("messaging")[0].get("sender").get("id")
+        )
         user = messenger.client.get_user_data(sender_id, fields=self.fields)
-        return {
-            'user': user,
-            'language': self.get_language(user)
-        }
+        return {"user": user, "language": self.get_language(user)}
 

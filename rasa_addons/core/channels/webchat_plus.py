@@ -35,7 +35,7 @@ class WebchatPlusInput(WebchatInput):
             credentials.get("namespace"),
             credentials.get("session_persistence", False),
             credentials.get("socketio_path", "/socket.io"),
-            credentials.get("cors_allowed_origins","*"),
+            credentials.get("cors_allowed_origins", "*"),
             credentials.get("config"),
         )
 
@@ -47,7 +47,7 @@ class WebchatPlusInput(WebchatInput):
         session_persistence: bool = False,
         socketio_path: Optional[Text] = "/socket.io",
         cors_allowed_origins="*",
-        config = None
+        config=None,
     ):
         self.bot_message_evt = bot_message_evt
         self.session_persistence = session_persistence
@@ -56,7 +56,6 @@ class WebchatPlusInput(WebchatInput):
         self.socketio_path = socketio_path
         self.cors_allowed_origins = cors_allowed_origins
         self.config = config
-       
 
     def blueprint(
         self, on_new_message: Callable[[UserMessage], Awaitable[Any]]
@@ -88,16 +87,22 @@ class WebchatPlusInput(WebchatInput):
                 data = {}
             if "session_id" not in data or data["session_id"] is None:
                 data["session_id"] = uuid.uuid4().hex
-                
+
             if self.config is not None:
                 props = self.config
             else:
-                config = await get_config_via_graphql(os.environ['BF_URL'], os.environ['BF_PROJECT_ID'])
-                props = config['credentials']['rasa_addons.core.channels.webchat_plus.WebchatPlusInput']['props']
-           
-            await sio.emit("session_confirm", {
-                'session_id':data["session_id"], 'props': props
-                }, room=sid)
+                config = await get_config_via_graphql(
+                    os.environ["BF_URL"], os.environ["BF_PROJECT_ID"]
+                )
+                props = config["credentials"][
+                    "rasa_addons.core.channels.webchat_plus.WebchatPlusInput"
+                ]["props"]
+
+            await sio.emit(
+                "session_confirm",
+                {"session_id": data["session_id"], "props": props},
+                room=sid,
+            )
             logger.debug(f"User {sid} connected to socketIO endpoint.")
 
         @sio.on(self.user_message_evt, namespace=self.namespace)
@@ -128,5 +133,4 @@ class WebchatPlusInput(WebchatInput):
             await on_new_message(message)
 
         return socketio_webhook
-
 

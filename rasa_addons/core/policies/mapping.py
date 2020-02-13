@@ -28,9 +28,9 @@ class BotfrontMappingPolicy(Policy):
     name, and always triggers the same premade action,
     meaning the model doesn't have to be retrained every
     time a new mapped intent is defined."""
-    
+
     defaults = {
-        'triggers': [{'trigger': r'^map\..+', 'action': 'action_botfront_mapping'}]
+        "triggers": [{"trigger": r"^map\..+", "action": "action_botfront_mapping"}]
     }
 
     def __init__(self, priority: int = 999, **kwargs: Any) -> None:
@@ -40,9 +40,11 @@ class BotfrontMappingPolicy(Policy):
     def _load_params(self, **kwargs: Dict[Text, Any]) -> None:
         config = copy.deepcopy(self.defaults)
         config.update(kwargs)
-        triggers = config.pop('triggers')
+        triggers = config.pop("triggers")
         if isinstance(triggers, list):
-            self.triggers = {trigger['trigger']: trigger['action'] for trigger in triggers}
+            self.triggers = {
+                trigger["trigger"]: trigger["action"] for trigger in triggers
+            }
         else:
             self.triggers = triggers
 
@@ -59,7 +61,7 @@ class BotfrontMappingPolicy(Policy):
     def predict_action_probabilities(
         self, tracker: DialogueStateTracker, domain: Domain
     ) -> List[float]:
-        logger.debug('Triggers: ' + ', '.join(self.triggers.keys()))
+        logger.debug("Triggers: " + ", ".join(self.triggers.keys()))
         """Predicts the assigned action.
 
         If the current intent is assigned to an action that action will be
@@ -72,14 +74,13 @@ class BotfrontMappingPolicy(Policy):
         if isinstance(intent, str):
             for trigger in self.triggers:
                 match = re.search(trigger, intent)
-                if match: action = self.triggers[trigger]
+                if match:
+                    action = self.triggers[trigger]
         if tracker.latest_action_name == ACTION_LISTEN_NAME:
             if action:
                 idx = domain.index_for_action(action)
                 if idx is None:
-                    logger.warning(
-                        "{} is not defined.".format(action)
-                    )
+                    logger.warning("{} is not defined.".format(action))
                 else:
                     prediction[idx] = 1
             elif intent == USER_INTENT_RESTART:
@@ -110,19 +111,14 @@ class BotfrontMappingPolicy(Policy):
                 idx = domain.index_for_action(ACTION_LISTEN_NAME)
                 prediction[idx] = 1
         else:
-            logger.debug(
-                "Predicted intent is not handled by BotfrontMappingPolicy."
-            )
+            logger.debug("Predicted intent is not handled by BotfrontMappingPolicy.")
         return prediction
 
     def persist(self, path: Text) -> None:
         """Persists priority and trigger regex"""
 
         config_file = os.path.join(path, "botfront_mapping_policy.json")
-        meta = {
-            "priority": self.priority,
-            "triggers": self.triggers
-        }
+        meta = {"priority": self.priority, "triggers": self.triggers}
         rasa.utils.io.create_directory_for_file(config_file)
         rasa.utils.io.dump_obj_as_json_to_file(config_file, meta)
 

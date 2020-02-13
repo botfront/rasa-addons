@@ -10,9 +10,10 @@ from requests.auth import HTTPBasicAuth
 logging.basicConfig(level="WARN")
 logger = logging.getLogger()
 
+
 class ActionBotfrontMapping(Action):
     def name(self):
-        return 'action_botfront_mapping'
+        return "action_botfront_mapping"
 
     async def run(
         self,
@@ -24,8 +25,15 @@ class ActionBotfrontMapping(Action):
         """Append 'utter_' to intent name and generates from that template"""
 
         events = []
-        response_name = 'utter_' + tracker.latest_message.intent["name"]
-        events += [create_bot_utterance(m) for m in await nlg.generate(response_name, tracker, output_channel.name(),
-                   language=tracker.latest_message.metadata["language"])]
+        response_name = "utter_" + tracker.latest_message.intent["name"]
+        events += [
+            create_bot_utterance(m)
+            for m in await nlg.generate(
+                response_name,
+                tracker,
+                output_channel.name(),
+                language=tracker.latest_message.metadata["language"],
+            )
+        ]
 
         return events

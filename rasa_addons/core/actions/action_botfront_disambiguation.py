@@ -16,6 +16,7 @@ from requests.auth import HTTPBasicAuth
 logging.basicConfig(level="WARN")
 logger = logging.getLogger()
 
+
 class ActionBotfrontDisambiguation(Action):
     def name(self):
         return "action_botfront_disambiguation"
@@ -34,9 +35,14 @@ class ActionBotfrontDisambiguation(Action):
                 message = event.value
                 break
         if message:
-            return [create_bot_utterance({ "text": message["title"], "buttons": message["buttons"] })]
+            return [
+                create_bot_utterance(
+                    {"text": message["title"], "buttons": message["buttons"]}
+                )
+            ]
         else:
             return []
+
 
 class ActionBotfrontDisambiguationFollowup(Action):
     def name(self) -> Text:
@@ -67,6 +73,7 @@ class ActionBotfrontDisambiguationFollowup(Action):
 
         return revert_events
 
+
 class ActionBotfrontFallback(ActionUtterTemplate):
     def name(self) -> Text:
         return "action_botfront_fallback"
@@ -79,10 +86,11 @@ class ActionBotfrontFallback(ActionUtterTemplate):
         evts = await super(ActionBotfrontFallback, self).run(
             output_channel, nlg, tracker, domain
         )
-        if (len(tracker.events) >= 4 and
-        isinstance(tracker.events[-4], ActionExecuted) and
-        tracker.events[-4].action_name ==
-        "action_botfront_disambiguation"):
+        if (
+            len(tracker.events) >= 4
+            and isinstance(tracker.events[-4], ActionExecuted)
+            and tracker.events[-4].action_name == "action_botfront_disambiguation"
+        ):
             return evts + [UserUtteranceReverted(), UserUtteranceReverted()]
         else:
             return evts + [UserUtteranceReverted()]

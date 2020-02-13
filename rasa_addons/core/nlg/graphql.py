@@ -107,7 +107,9 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
     ) -> List[Dict[Text, Any]]:
 
         fallback_language_slot = tracker.slots.get("fallback_language")
-        fallback_language = fallback_language_slot.initial_value if fallback_language_slot else None
+        fallback_language = (
+            fallback_language_slot.initial_value if fallback_language_slot else None
+        )
         language = tracker.latest_message.metadata.get("language") or fallback_language
 
         body = nlg_request_format(

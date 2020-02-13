@@ -12,6 +12,7 @@ from sanic.response import HTTPResponse
 
 logger = logging.getLogger(__name__)
 
+
 class BotfrontRestOutput(CollectingOutputChannel):
     @staticmethod
     def _message(
@@ -29,7 +30,7 @@ class BotfrontRestOutput(CollectingOutputChannel):
             "recipient_id": recipient_id,
             "text": text,
             "image": image,
-            "quick_replies": buttons, # compatibility with Rasa-webchat
+            "quick_replies": buttons,  # compatibility with Rasa-webchat
             "attachment": attachment,
             "custom": custom,
             "metadata": metadata,
@@ -45,23 +46,39 @@ class BotfrontRestOutput(CollectingOutputChannel):
         for i in range(len(message_parts)):
             message_part = message_parts[i]
             if i == len(message_parts) - 1:
-                await self._persist_message(self._message(recipient_id, text=message_part, metadata=kwargs.get("metadata", {})))
+                await self._persist_message(
+                    self._message(
+                        recipient_id,
+                        text=message_part,
+                        metadata=kwargs.get("metadata", {}),
+                    )
+                )
             else:
-                await self._persist_message(self._message(recipient_id, text=message_part))
+                await self._persist_message(
+                    self._message(recipient_id, text=message_part)
+                )
 
     async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
     ) -> None:
         """Sends an image. Default will just post the url as a string."""
 
-        await self._persist_message(self._message(recipient_id, image=image, metadata=kwargs.get("metadata", {})))
+        await self._persist_message(
+            self._message(
+                recipient_id, image=image, metadata=kwargs.get("metadata", {})
+            )
+        )
 
     async def send_attachment(
         self, recipient_id: Text, attachment: Text, **kwargs: Any
     ) -> None:
         """Sends an attachment. Default will just post as a string."""
 
-        await self._persist_message(self._message(recipient_id, attachment=attachment, metadata=kwargs.get("metadata", {})))
+        await self._persist_message(
+            self._message(
+                recipient_id, attachment=attachment, metadata=kwargs.get("metadata", {})
+            )
+        )
 
     async def send_text_with_buttons(
         self,
@@ -71,13 +88,23 @@ class BotfrontRestOutput(CollectingOutputChannel):
         **kwargs: Any,
     ) -> None:
         await self._persist_message(
-            self._message(recipient_id, text=text, buttons=buttons, metadata=kwargs.get("metadata", {}))
+            self._message(
+                recipient_id,
+                text=text,
+                buttons=buttons,
+                metadata=kwargs.get("metadata", {}),
+            )
         )
 
     async def send_custom_json(
         self, recipient_id: Text, json_message: Dict[Text, Any], **kwargs: Any
     ) -> None:
-        await self._persist_message(self._message(recipient_id, custom=json_message, metadata=kwargs.get("metadata", {})))
+        await self._persist_message(
+            self._message(
+                recipient_id, custom=json_message, metadata=kwargs.get("metadata", {})
+            )
+        )
+
 
 class BotfrontRestInput(RestInput):
     def get_metadata(self, request: Request) -> Optional[Dict[Text, Any]]:
