@@ -15,11 +15,11 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
-        "pyyaml",
         "requests",
         "requests_futures",
         "fuzzy_matcher",
         "fbmessenger",
+        "sgqlc",
     ],
     packages=find_packages(exclude=["tests"]),
     licence="Apache 2.0",

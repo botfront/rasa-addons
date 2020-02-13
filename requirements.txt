@@ -1,4 +1,5 @@
-pyyaml
-requests
-requests_futures
-fuzzy_matcher
+requests==2.22.0
+requests_futures==0.9.9
+fuzzy_matcher==0.1.0
+fbmessenger==6.00
+sgqlc==9.1
