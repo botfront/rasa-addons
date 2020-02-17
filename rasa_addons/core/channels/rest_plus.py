@@ -41,9 +41,9 @@ class BotfrontRestPlusInput(BotfrontRestInput):
         async def health(request: Request) -> HTTPResponse:
             return response.json({"status": "ok"})
 
-        @custom_webhook.route("/rules", methods=["GET"])
+        @custom_webhook.route("/props", methods=["GET"])
         async def serve_rules(request: Request) -> HTTPResponse:
-            return response.json({"props": self.config})
+            return response.json(self.config)
 
         @custom_webhook.route("/webhook", methods=["POST"])
         async def receive(request: Request) -> HTTPResponse:
