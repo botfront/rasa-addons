@@ -130,7 +130,9 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
             if "graphql" in self.nlg_endpoint.url:
                 from sgqlc.endpoint.http import HTTPEndpoint
 
-                response = HTTPEndpoint(self.nlg_endpoint.url)(NLG_QUERY, body)
+                api_key = os.environ.get("API_KEY")
+                headers = [{"Authorization": api_key}] if api_key else []
+                response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(NLG_QUERY, body)
                 response = response["data"]["getResponse"]
             else:
                 response = await self.nlg_endpoint.request(

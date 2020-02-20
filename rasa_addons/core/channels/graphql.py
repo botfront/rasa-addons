@@ -28,7 +28,9 @@ async def get_config_via_graphql(bf_url, project_id):
     from sgqlc.endpoint.http import HTTPEndpoint
     import urllib.error
 
-    endpoint = HTTPEndpoint(bf_url)
+    api_key = os.environ.get("API_KEY")
+    headers = [{"Authorization": api_key}] if api_key else []
+    endpoint = HTTPEndpoint(bf_url, *headers)
 
     async def load():
         try:
