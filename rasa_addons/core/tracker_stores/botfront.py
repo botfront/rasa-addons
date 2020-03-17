@@ -122,7 +122,7 @@ class BotfrontTrackerStore(TrackerStore):
     def _get_last_timestamp(self, sender_id):
         return self.trackers_info.get(sender_id, -1)
        
-    def _store_tracker_info(sender_id, tracker_info):
+    def _store_tracker_info(self, sender_id, tracker_info):
         self.trackers_info[sender_id] = {
             "last_index": tracker_info["lastIndex"],
             "last_timestamp": tracker_info["lastTimestamp"],
