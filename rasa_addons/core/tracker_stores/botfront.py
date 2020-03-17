@@ -2,7 +2,6 @@ import logging
 import jsonpickle
 import requests
 import time
-import asyncio
 import os
 from threading import Thread
 
@@ -81,7 +80,7 @@ class BotfrontTrackerStore(TrackerStore):
         super(BotfrontTrackerStore, self).__init__(domain)
         logger.debug("BotfrontTrackerStore tracker store created")
 
-    async def _graphql_query(self, query, params):
+    def _graphql_query(self, query, params):
         try:
             response = self.graphql_endpoint(query, params)
             if "errors" in response and response["errors"]:
@@ -91,8 +90,8 @@ class BotfrontTrackerStore(TrackerStore):
             logger.debug(f"something went wrong with the query {GET_TRACKER}")
             return None
 
-    async def _fetch_tracker(self, sender_id, lastIndex):
-        data = await self._graphql_query(
+    def _fetch_tracker(self, sender_id, lastIndex):
+        data =  self._graphql_query(
             GET_TRACKER,
             {
                 "senderId": sender_id,
@@ -103,15 +102,15 @@ class BotfrontTrackerStore(TrackerStore):
         )
         return data["trackerStore"]
 
-    async def _insert_tracker_gql(self, sender_id, tracker):
-        data = await self._graphql_query(
+    def _insert_tracker_gql(self, sender_id, tracker):
+        data =  self._graphql_query(
             INSERT_TRACKER,
             {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
         )
         return data["insertTracker"]
 
-    async def _update_tracker_gql(self, sender_id, tracker):
-        data = await self._graphql_query(
+    def _update_tracker_gql(self, sender_id, tracker):
+        data = self._graphql_query(
             UPDATE_TRACKER,
             {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
         )
