@@ -132,7 +132,7 @@ class BotfrontTrackerStore(TrackerStore):
 
         # Fetch here just in case retrieve wasn't called first
         sender_id = canonical_tracker.sender_id
-        tracker = self.trackers[sender_id]
+        tracker = self.trackers.get(sender_id)
         serialized_tracker = self._serialize_tracker_to_dict(canonical_tracker)
 
         if tracker is None:  # the tracker does not exist
@@ -141,7 +141,7 @@ class BotfrontTrackerStore(TrackerStore):
             return serialized_tracker["events"]
         else:  # the tracker  exist
             # Insert only the new examples
-            last_timestamp = _get_last_timestamp(sender_id)
+            last_timestamp = self._get_last_timestamp(sender_id)
             new_events = list(
                 filter(
                     lambda x: x["timestamp"] > last_timestamp,
