@@ -116,18 +116,12 @@ class BotfrontTrackerStore(TrackerStore):
         )
         return data["updateTracker"]
 
-    def _get_last_index(sender_id):
-        last_index = self.trackers_info[sender_id].last_index
-        if last_index:
-            return last_index
-        return 0
-
-    def _get_last_timestamp(sender_id):
-        last_timestamp = self.trackers_info[sender_id].last_timestamp
-        if last_timestamp:
-            return last_timestamp
-        return 0
-
+    def _get_last_index(self, sender_id):
+        return self.trackers_info.get(sender_id, -1)
+       
+    def _get_last_timestamp(self, sender_id):
+        return self.trackers_info.get(sender_id, -1)
+       
     def _store_tracker_info(sender_id, tracker_info):
         self.trackers_info[sender_id] = {
             "last_index": tracker_info["lastIndex"],
