@@ -100,21 +100,21 @@ class BotfrontTrackerStore(TrackerStore):
                 "maxEvents": self.max_events,
             },
         )
-        return data["trackerStore"]
+        return data.get("trackerStore")
 
     def _insert_tracker_gql(self, sender_id, tracker):
         data =  self._graphql_query(
             INSERT_TRACKER,
             {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
         )
-        return data
+        return data.get("insertTrackerStore")
 
     def _update_tracker_gql(self, sender_id, tracker):
         data = self._graphql_query(
             UPDATE_TRACKER,
             {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
         )
-        return data
+        return data.get("updateTrackerStore")
 
     def _get_last_index(self, sender_id):
         info = self.trackers_info.get(sender_id, -1)
@@ -144,21 +144,25 @@ class BotfrontTrackerStore(TrackerStore):
         serialized_tracker = self._serialize_tracker_to_dict(canonical_tracker)
 
         if tracker is None:  # the tracker does not exist
-            self._insert_tracker_gql(sender_id, serialized_tracker)
+            updated_info = self._insert_tracker_gql(sender_id, serialized_tracker)
             self.trackers[sender_id] = serialized_tracker
+            self.trackers_info[sender_id] = updated_info
             return serialized_tracker["events"]
         else:  # the tracker  exist
             # Insert only the new examples
             last_timestamp = self._get_last_timestamp(sender_id)
+            last_index = self._get_last_index(sender_id)
             new_events = list(
                 filter(
                     lambda x: x["timestamp"] > last_timestamp,
                     serialized_tracker["events"],
                 )
             )
+            self.trackers_info.get(sender_id)
             tracker_shallow_copy = {key: val for key, val in serialized_tracker.items()}
             tracker_shallow_copy["events"] = new_events
-            self._update_tracker_gql(sender_id, serialized_tracker)
+            updated_info = self._update_tracker_gql(sender_id, serialized_tracker)
+            self.trackers_info[sender_id] = updated_info
             self.trackers[sender_id] = serialized_tracker
             return serialized_tracker["events"]
 
