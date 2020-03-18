@@ -169,6 +169,7 @@ class BotfrontTrackerStore(TrackerStore):
             )
             tracker_shallow_copy = {key: val for key, val in serialized_tracker.items()}
             tracker_shallow_copy["events"] = new_events
+            updated_info = self._update_tracker_gql(sender_id, tracker_shallow_copy)
             self._store_tracker_info(sender_id, updated_info)
             self.trackers[sender_id] = serialized_tracker
             return serialized_tracker["events"]
