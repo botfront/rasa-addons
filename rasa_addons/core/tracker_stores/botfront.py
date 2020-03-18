@@ -161,14 +161,12 @@ class BotfrontTrackerStore(TrackerStore):
         else:  # the tracker  exist
             # Insert only the new examples
             last_timestamp = self._get_last_timestamp(sender_id)
-            last_index = self._get_last_index(sender_id)
             new_events = list(
                 filter(
                     lambda x: x["timestamp"] > last_timestamp,
                     serialized_tracker["events"],
                 )
             )
-            self.trackers_info.get(sender_id)
             tracker_shallow_copy = {key: val for key, val in serialized_tracker.items()}
             tracker_shallow_copy["events"] = new_events
             updated_info = self._update_tracker_gql(sender_id, serialized_tracker)
