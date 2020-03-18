@@ -197,17 +197,22 @@ class BotfrontTrackerStore(TrackerStore):
             new_tracker = {**old_tracker, **remote_tracker}
             new_tracker['events'] = new_events
             self.trackers[sender_id] = new_tracker
+            return new_tracker
         else:
             self.trackers[sender_id] = remote_tracker
+            return remote_tracker
         
 
     def retrieve(self, sender_id):
         last_index = self._get_last_index(sender_id)
         new_tracker_info =  self._fetch_tracker(sender_id, last_index)
+        current_tracker = self.trackers.get(sender_id)
         if new_tracker_info is not None:
             self._store_tracker_info(sender_id,new_tracker_info)
             tracker = self._update_tracker(sender_id, new_tracker_info.get('tracker'))
             return self._convert_tracker(sender_id, tracker)
+        elif current_tracker is not None:
+            return self._convert_tracker(sender_id, current_tracker)
         return None
 
     def sweep(self):
