@@ -120,6 +120,8 @@ class BotfrontTrackerStore(TrackerStore):
         info = self.trackers_info.get(sender_id, -1)
         if info == -1:
             return info
+        elif info.get('last_index') is None:
+            return -1
         else:
             return info.get('last_index')
        
@@ -127,6 +129,8 @@ class BotfrontTrackerStore(TrackerStore):
         info = self.trackers_info.get(sender_id, 0)
         if info == 0:
             return info
+        elif info.get('last_timestamp') is None:
+            return 0
         else:
             return info.get('last_timestamp')
        
