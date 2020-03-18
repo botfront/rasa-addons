@@ -38,7 +38,10 @@ mutation insertTracker(
     $projectId: String!
     $tracker: Any
 ) {
-   insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker)
+   insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker){
+        lastIndex
+        lastTimestamp
+    }
 }
 """
 
@@ -48,7 +51,10 @@ mutation updateTracker(
     $projectId: String!
     $tracker: Any
 ) {
-   updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker)
+   updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker){
+        lastIndex
+        lastTimestamp
+    }
 }
 """
 
