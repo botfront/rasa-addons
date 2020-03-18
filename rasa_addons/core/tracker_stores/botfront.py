@@ -48,7 +48,7 @@ mutation updateTracker(
     $projectId: String!
     $tracker: Any
 ) {
-   updateTracker(senderId: $senderId, projectId: $projectId, tracker: $tracker)
+   updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker)
 }
 """
 
@@ -107,20 +107,28 @@ class BotfrontTrackerStore(TrackerStore):
             INSERT_TRACKER,
             {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
         )
-        return data["insertTracker"]
+        return data
 
     def _update_tracker_gql(self, sender_id, tracker):
         data = self._graphql_query(
             UPDATE_TRACKER,
             {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
         )
-        return data["updateTracker"]
+        return data
 
     def _get_last_index(self, sender_id):
-        return self.trackers_info.get(sender_id, -1)
+        info = self.trackers_info.get(sender_id, -1)
+        if info == -1:
+            return info
+        else:
+            return info.get('last_index')
        
     def _get_last_timestamp(self, sender_id):
-        return self.trackers_info.get(sender_id, -1)
+        info = self.trackers_info.get(sender_id, 0)
+        if info == 0:
+            return info
+        else:
+            return info.get('last_timestamp')
        
     def _store_tracker_info(self, sender_id, tracker_info):
         self.trackers_info[sender_id] = {
@@ -168,12 +176,12 @@ class BotfrontTrackerStore(TrackerStore):
             return None
 
     def _update_tracker(self, sender_id, remote_tracker):
-        old_tracker = self.trackers[sender_id]
+        old_tracker = self.trackers.get(sender_id)
         if old_tracker is not None:
-            events = old_tracker.events
-            new_events = [*events, *remote_tracker.events]
+            events = old_tracker.get('events')
+            new_events = [*events, *remote_tracker.get('events')]
             new_tracker = {**old_tracker, **remote_tracker}
-            new_tracker.events = new_events
+            new_tracker['events'] = new_events
             self.trackers[sender_id] = new_tracker
         else:
             self.trackers[sender_id] = remote_tracker
@@ -184,16 +192,16 @@ class BotfrontTrackerStore(TrackerStore):
         new_tracker_info =  self._fetch_tracker(sender_id, last_index)
         if new_tracker_info is not None:
             self._store_tracker_info(sender_id,new_tracker_info)
-            tracker = self._update_tracker(sender_id, new_tracker_info.tracker)
+            tracker = self._update_tracker(sender_id, new_tracker_info.get('tracker'))
             return self._convert_tracker(sender_id, tracker)
         return None
 
     def sweep(self):
         # Iterate over list of keys to prevent runtime errors when deleting elements
         for key in list(self.trackers.keys()):
-            tracker = self.trackers[key]
+            tracker = self.trackers.get(key)
             if (
-                not self._is_none(tracker)
+                tracker is not None
                 and tracker["latest_event_time"]
                 < time.time() - self.tracker_persist_time
             ):
