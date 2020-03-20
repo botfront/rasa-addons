@@ -69,7 +69,7 @@ def _start_sweeper(tracker_store, break_time):
 class BotfrontTrackerStore(TrackerStore):
     def __init__(self, domain, url, **kwargs):
 
-        self.project_id = os.environ["BF_PROJECT_ID"]
+        self.project_id = os.environ.get("BF_PROJECT_ID")
         self.tracker_persist_time = kwargs.get("tracker_persist_time", 3600)
         self.max_events = kwargs.get("max_events", 100)
         self.trackers = {}
