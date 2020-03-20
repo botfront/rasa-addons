@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 jsonpickle.set_preferred_backend("json")
 jsonpickle.set_encoder_options("json", ensure_ascii=False)
 
-print("hum")
 GET_TRACKER = """
 query trackerStore(
     $senderId: String!
@@ -70,7 +69,7 @@ def _start_sweeper(tracker_store, break_time):
 class BotfrontTrackerStore(TrackerStore):
     def __init__(self, domain, url, **kwargs):
 
-        self.project_id = kwargs.get("project_id")
+        self.project_id = os.environ["BF_PROJECT_ID"]
         self.tracker_persist_time = kwargs.get("tracker_persist_time", 3600)
         self.max_events = kwargs.get("max_events", 100)
         self.trackers = {}
@@ -89,12 +88,12 @@ class BotfrontTrackerStore(TrackerStore):
     def _graphql_query(self, query, params):
         try:
             response = self.graphql_endpoint(query, params)
-            if "errors" in response and response["errors"]:
+            if response.get("errors") and not response.get("data"):
                 raise urllib.error.URLError("Null response.")
             return response["data"]
         except urllib.error.URLError:
             logger.debug(f"something went wrong with the query {GET_TRACKER}")
-            return None
+            return {}
 
     def _fetch_tracker(self, sender_id, lastIndex):
         data = self._graphql_query(
@@ -141,10 +140,11 @@ class BotfrontTrackerStore(TrackerStore):
             return info.get("last_timestamp")
 
     def _store_tracker_info(self, sender_id, tracker_info):
-        self.trackers_info[sender_id] = {
-            "last_index": tracker_info["lastIndex"],
-            "last_timestamp": tracker_info["lastTimestamp"],
-        }
+        if tracker_info is not None:
+            self.trackers_info[sender_id] = {
+                "last_index": tracker_info["lastIndex"],
+                "last_timestamp": tracker_info["lastTimestamp"],
+            }
 
     def save(self, canonical_tracker):
 
@@ -214,16 +214,15 @@ class BotfrontTrackerStore(TrackerStore):
         # retreive all new info since the last sync (given by last index)
         new_tracker_info = self._fetch_tracker(sender_id, last_index)
         current_tracker = self.trackers.get(sender_id)
+        # the tracker do not exist yet
+        if current_tracker is None: return None
         # the tracker exist localy and on the remote and new info have been received
         if new_tracker_info is not None:
             self._store_tracker_info(sender_id, new_tracker_info)
             tracker = self._update_tracker(sender_id, new_tracker_info.get("tracker"))
             return self._convert_tracker(sender_id, tracker)
         # the tracker exist localy an there is no new infos
-        elif current_tracker is not None:
-            return self._convert_tracker(sender_id, current_tracker)
-        # the tracker do not exist yest
-        return None
+        return self._convert_tracker(sender_id, current_tracker)
 
     def sweep(self):
         # Iterate over list of keys to prevent runtime errors when deleting elements
