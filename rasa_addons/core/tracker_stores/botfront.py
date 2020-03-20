@@ -191,7 +191,11 @@ class BotfrontTrackerStore(TrackerStore):
         old_tracker = self.trackers.get(sender_id)
         if old_tracker is not None:
             events = old_tracker.get('events')
-            new_events = [*events, *remote_tracker.get('events')]
+            remote_events = remote_tracker.get('events')
+            if( len(remote_events) == self.max_events):
+                new_events = remote_events
+            else :
+                new_events = [*events, *remote_events]
             new_tracker = {**old_tracker, **remote_tracker}
             new_tracker['events'] = new_events
             self.trackers[sender_id] = new_tracker
