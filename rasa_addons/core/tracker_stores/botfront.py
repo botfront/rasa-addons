@@ -88,7 +88,7 @@ class BotfrontTrackerStore(TrackerStore):
     def _graphql_query(self, query, params):
         try:
             response = self.graphql_endpoint(query, params)
-            if response.get("errors") and not response.get("data"):
+            if response.get("errors") is not None and response.get("data") is None:
                 raise urllib.error.URLError("Null response.")
             return response["data"]
         except urllib.error.URLError:
