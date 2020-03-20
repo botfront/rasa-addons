@@ -153,12 +153,13 @@ class BotfrontTrackerStore(TrackerStore):
         tracker = self.trackers.get(sender_id)
         serialized_tracker = self._serialize_tracker_to_dict(canonical_tracker)
 
-        if tracker is None:  # the tracker does not exist
+        if tracker is None:  # the tracker does not exist localy ( first save)
             updated_info = self._insert_tracker_gql(sender_id, serialized_tracker)
             self.trackers[sender_id] = serialized_tracker
+            # update the last index and last time stamp for future uses
             self._store_tracker_info(sender_id, updated_info)
             return serialized_tracker["events"]
-        else:  # the tracker  exist
+        else:  # the tracker  exist localy
             # Insert only the new examples
             last_timestamp = self._get_last_timestamp(sender_id)
             new_events = list(
@@ -169,7 +170,9 @@ class BotfrontTrackerStore(TrackerStore):
             )
             tracker_shallow_copy = {key: val for key, val in serialized_tracker.items()}
             tracker_shallow_copy["events"] = new_events
+            # only send the new events to the remote tracker
             updated_info = self._update_tracker_gql(sender_id, tracker_shallow_copy)
+            # update the last index and last time stamp for future uses
             self._store_tracker_info(sender_id, updated_info)
             self.trackers[sender_id] = serialized_tracker
             return serialized_tracker["events"]
@@ -192,6 +195,8 @@ class BotfrontTrackerStore(TrackerStore):
         if old_tracker is not None:
             events = old_tracker.get('events')
             remote_events = remote_tracker.get('events')
+            # if we recieve max event it means that the we skiped some events
+            # as we take only the last max events, so we remplace the local copy with the remote data
             if( len(remote_events) == self.max_events):
                 new_events = remote_events
             else :
@@ -207,14 +212,18 @@ class BotfrontTrackerStore(TrackerStore):
 
     def retrieve(self, sender_id):
         last_index = self._get_last_index(sender_id)
+        # retreive all new info since the last sync (given by last index)
         new_tracker_info =  self._fetch_tracker(sender_id, last_index)
         current_tracker = self.trackers.get(sender_id)
+        # the tracker exist localy and on the remote and new info have been received
         if new_tracker_info is not None:
             self._store_tracker_info(sender_id,new_tracker_info)
             tracker = self._update_tracker(sender_id, new_tracker_info.get('tracker'))
             return self._convert_tracker(sender_id, tracker)
+        # the tracker exist localy an there is no new infos
         elif current_tracker is not None:
             return self._convert_tracker(sender_id, current_tracker)
+        # the tracker do not exist yest    
         return None
 
     def sweep(self):
