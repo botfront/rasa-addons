@@ -20,33 +20,31 @@ logger = logging.getLogger(__name__)
 class BotfrontFileImporter(TrainingDataImporter):
     def __init__(
         self,
-        config_paths: Optional[Dict[Text, Text]] = None,
+        config_file: Optional[Union[List[Text], Text]] = None,
         domain_path: Optional[Text] = None,
-        training_data_path: Optional[Text] = None,
+        training_data_paths: Optional[Union[List[Text], Text]] = None,
     ):
-        # keep only policies in core_config
-        self.core_config = {
-            "policies": io_utils.read_config_file(
-                config_paths[list(config_paths.keys())[0]]
-            )["policies"]
-        }
-        self._stories_path = os.path.join(training_data_path, "stories.md")
-
-        # keep all but policies in nlu_config
-        self.nlu_config = {}
-        for lang in config_paths:
-            self.nlu_config[lang] = io_utils.read_config_file(config_paths[lang])
-            del self.nlu_config[lang]["policies"]
-            self.nlu_config[lang]["data"] = (
-                "data_for_" + lang
-            )  # so rasa.nlu.train.train makes the right get_nlu_data call
-            self.nlu_config[lang]["path"] = os.path.join(
-                training_data_path, "nlu", "{}.md".format(lang)
-            )
-
         self._domain_path = domain_path
 
-    async def get_core_config(self) -> Dict:
+        self._story_files, self._nlu_files = data.get_core_nlu_files(
+            training_data_paths
+        )
+
+        self.core_config = {}
+        self.nlu_config = {}
+        if config_file:
+            if not isinstance(config_file, list): config_file = [config_file]
+            for file in config_file:
+                if not os.path.exists(file): continue
+                config = io_utils.read_config_file(file)
+                lang = config["language"]
+                self.core_config = {"policies": config["policies"]}
+                self.nlu_config[lang] = {"pipeline": config["pipeline"], "data": lang}
+    
+    def path_for_nlu_lang(self, lang) -> Text:
+        return [x for x in self._nlu_files if "{}.md".format(lang) in x]
+
+    async def get_config(self) -> Dict:
         return self.core_config
 
     async def get_nlu_config(self, languages=True) -> Dict:
@@ -66,7 +64,7 @@ class BotfrontFileImporter(TrainingDataImporter):
     ) -> StoryGraph:
 
         story_steps = await StoryFileReader.read_from_files(
-            [self._stories_path],
+            self._story_files,
             await self.get_domain(),
             interpreter,
             template_variables,
@@ -75,28 +73,23 @@ class BotfrontFileImporter(TrainingDataImporter):
         )
         return StoryGraph(story_steps)
 
-    async def get_stories_hash(self):
-        # Use a file hash of stories file to figure out Core fingerprint, instead of
-        # storygraph object hash which is unstable
-        return get_file_hash(self._stories_path)
-
     async def get_nlu_data(self, languages=True) -> Dict[Text, TrainingData]:
-        if isinstance(languages, str) and languages.startswith("data_for_"):
-            lang = languages.replace("data_for_", "")
-            return utils.training_data_from_paths([self.nlu_config[lang]["path"]], "xx")
+        language = None
+        if isinstance(languages, str):
+            language = languages
+            languages = [language]
         if not isinstance(languages, list):
             languages = self.nlu_config.keys()
         td = {}
         for lang in languages:
             try:
                 td[lang] = utils.training_data_from_paths(
-                    [self.nlu_config[lang]["path"]], "xx"
+                    self.path_for_nlu_lang(lang), lang,
                 )
             except ValueError as e:
                 if str(e).startswith("Unknown data format"):
-                    from rasa.nlu.training_data import TrainingData
-
                     td[lang] = TrainingData()
+        if language: return td.get(language, TrainingData())
         return td
 
     async def get_domain(self) -> Domain:
