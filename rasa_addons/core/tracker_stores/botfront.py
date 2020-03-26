@@ -214,14 +214,19 @@ class BotfrontTrackerStore(TrackerStore):
         # retreive all new info since the last sync (given by last index)
         new_tracker_info = self._fetch_tracker(sender_id, last_index)
         current_tracker = self.trackers.get(sender_id)
-        # the tracker do not exist yet
-        if current_tracker is None: return None
-        # the tracker exist localy and on the remote and new info have been received
+        # do not chane the order of these ifs 
+        # ortherwise you will get synchornication issues when working with multiple rasa instances
+        # the tracker exist on the remote and may exist locally
         if new_tracker_info is not None:
             self._store_tracker_info(sender_id, new_tracker_info)
             tracker = self._update_tracker(sender_id, new_tracker_info.get("tracker"))
             return self._convert_tracker(sender_id, tracker)
-        # the tracker exist localy an there is no new infos
+       
+        
+        # the tracker do not exist yet
+        if current_tracker is None: return None
+
+         # the tracker exist localy an there is no new infos
         return self._convert_tracker(sender_id, current_tracker)
 
     def sweep(self):
