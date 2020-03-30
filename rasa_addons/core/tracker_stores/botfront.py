@@ -235,8 +235,7 @@ class BotfrontTrackerStore(TrackerStore):
             tracker = self.trackers.get(key)
             if (
                 tracker is not None
-                and tracker["latest_event_time"]
-                < time.time() - self.tracker_persist_time
+                and tracker.get("latest_event_time", float("inf")) < time.time() - self.tracker_persist_time
             ):
                 logger.debug("SWEEPER: Removing tracker for user {}".format(key))
                 del self.trackers[key]
