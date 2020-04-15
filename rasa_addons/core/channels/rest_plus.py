@@ -2,6 +2,7 @@ import asyncio
 import rasa
 import logging
 import inspect
+import os
 from rasa.core.channels.channel import (
     RestInput,
     UserMessage,
@@ -16,6 +17,7 @@ from rasa.core import utils
 from sanic.response import HTTPResponse
 from rasa_addons.core.channels.rest import BotfrontRestInput, BotfrontRestOutput
 from rasa.utils.endpoints import EndpointConfig
+from rasa_addons.core.channels.graphql import get_config_via_graphql
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ class BotfrontRestPlusInput(BotfrontRestInput):
     def from_credentials(cls, credentials: Optional[Dict[Text, Any]]) -> InputChannel:
         return cls(**credentials)
 
-    def __init__(self, config={}):
+    def __init__(self, config: Optional[Dict[Text, Any]] = None):
         self.config = config
 
     def blueprint(
@@ -43,7 +45,14 @@ class BotfrontRestPlusInput(BotfrontRestInput):
 
         @custom_webhook.route("/props", methods=["GET"])
         async def serve_rules(request: Request) -> HTTPResponse:
-            return response.json(self.config)
+            if self.config:
+                return response.json(self.config)
+            else:
+                config = await get_config_via_graphql(
+                    os.environ["BF_URL"], os.environ["BF_PROJECT_ID"]
+                )
+                return config["credentials"]["rasa_addons.core.channels.rest_plus.BotfrontRestPlusInput"]
+
 
         @custom_webhook.route("/webhook", methods=["POST"])
         async def receive(request: Request) -> HTTPResponse:
