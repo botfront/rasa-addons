@@ -36,7 +36,7 @@ mutation insertTracker(
     $senderId: String!
     $projectId: String!
     $tracker: Any
-    $env: environement
+    $env: Environement
 ) {
    insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker, env: $env){
         lastIndex
@@ -50,7 +50,7 @@ mutation updateTracker(
     $senderId: String!
     $projectId: String!
     $tracker: Any
-    $env: environement
+    $env: Environement
 ) {
    updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker, env: $env){
         lastIndex
