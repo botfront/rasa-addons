@@ -36,8 +36,9 @@ mutation insertTracker(
     $senderId: String!
     $projectId: String!
     $tracker: Any
+    $env: environement
 ) {
-   insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker){
+   insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker, env: $env){
         lastIndex
         lastTimestamp
     }
@@ -49,8 +50,9 @@ mutation updateTracker(
     $senderId: String!
     $projectId: String!
     $tracker: Any
+    $env: environement
 ) {
-   updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker){
+   updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker, env: $env){
         lastIndex
         lastTimestamp
     }
@@ -82,6 +84,8 @@ class BotfrontTrackerStore(TrackerStore):
         api_key = os.environ.get("API_KEY")
         headers = [{"Authorization": api_key}] if api_key else []
         self.graphql_endpoint = HTTPEndpoint(url, *headers)
+        self.environement = os.environ.get("BOTFRONT_ENV", "development")
+
         super(BotfrontTrackerStore, self).__init__(domain)
         logger.debug("BotfrontTrackerStore tracker store created")
 
@@ -110,14 +114,14 @@ class BotfrontTrackerStore(TrackerStore):
     def _insert_tracker_gql(self, sender_id, tracker):
         data = self._graphql_query(
             INSERT_TRACKER,
-            {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
+            {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker, "env": self.environement},
         )
         return data.get("insertTrackerStore")
 
     def _update_tracker_gql(self, sender_id, tracker):
         data = self._graphql_query(
             UPDATE_TRACKER,
-            {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker},
+            {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker, "env": self.environement},
         )
         return data.get("updateTrackerStore")
 
