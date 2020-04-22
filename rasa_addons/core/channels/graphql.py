@@ -17,8 +17,8 @@ query(
     getConfig(
         projectId: $projectId
     ) {
-       credentials
-       endpoints
+        credentials
+        endpoints
     }
 }
 """
@@ -26,6 +26,7 @@ query(
 
 async def get_config_via_graphql(bf_url, project_id):
     from sgqlc.endpoint.http import HTTPEndpoint
+    logging.getLogger("sgqlc.endpoint.http").setLevel(logging.WARNING)
     import urllib.error
 
     api_key = os.environ.get("API_KEY")

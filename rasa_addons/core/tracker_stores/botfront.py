@@ -12,6 +12,7 @@ from sgqlc.endpoint.http import HTTPEndpoint
 import urllib.error
 
 logger = logging.getLogger(__name__)
+logging.getLogger("sgqlc.endpoint.http").setLevel(logging.WARNING)
 
 jsonpickle.set_preferred_backend("json")
 jsonpickle.set_encoder_options("json", ensure_ascii=False)
@@ -23,8 +24,8 @@ query trackerStore(
     $after: Int
     $maxEvents: Int
 ) {
-   trackerStore(senderId: $senderId, projectId:$projectId, after:$after, maxEvents:$maxEvents) {
-       	tracker
+    trackerStore(senderId: $senderId, projectId:$projectId, after:$after, maxEvents:$maxEvents) {
+        tracker
         lastIndex
         lastTimestamp
     }
@@ -38,7 +39,7 @@ mutation insertTracker(
     $tracker: Any
     $env: Environement
 ) {
-   insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker, env: $env){
+    insertTrackerStore(senderId: $senderId, projectId:$projectId, tracker:$tracker, env: $env){
         lastIndex
         lastTimestamp
     }
@@ -52,7 +53,7 @@ mutation updateTracker(
     $tracker: Any
     $env: Environement
 ) {
-   updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker, env: $env){
+    updateTrackerStore(senderId: $senderId, projectId: $projectId, tracker: $tracker, env: $env){
         lastIndex
         lastTimestamp
     }
@@ -225,12 +226,12 @@ class BotfrontTrackerStore(TrackerStore):
             self._store_tracker_info(sender_id, new_tracker_info)
             tracker = self._update_tracker(sender_id, new_tracker_info.get("tracker"))
             return self._convert_tracker(sender_id, tracker)
-       
+
         
         # the tracker do not exist yet
         if current_tracker is None: return None
 
-         # the tracker exist localy an there is no new infos
+        # the tracker exist localy an there is no new infos
         return self._convert_tracker(sender_id, current_tracker)
 
     def sweep(self):

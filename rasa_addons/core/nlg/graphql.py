@@ -11,6 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 NLG_QUERY = """
+fragment CarouselElementFields on CarouselElement {
+    title
+    subtitle
+    image_url
+    default_action { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } }
+    buttons { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } }
+}
 query(
     $template: String!
     $arguments: Any
@@ -23,11 +30,12 @@ query(
         tracker: $tracker
         channel: $channel
     ) {
-        text
         metadata
-        ...on QuickReplyPayload { buttons { title, type, ...on WebUrlButton { url } ...on PostbackButton { payload } } }
-        ...on ImagePayload { image }
-        ...on CustomPayload { buttons { title, type, ...on WebUrlButton { url } ...on PostbackButton { payload } }, elements, attachment, image, custom }
+        ...on TextPayload { text }
+        ...on QuickReplyPayload { text, buttons { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
+        ...on ImagePayload { text, image }
+        ...on CarouselPayload { template_type, elements { ...CarouselElementFields } }
+        ...on CustomPayload { customText: text, customImage: image, customButtons: buttons, customElements: elements, custom, customAttachment: attachment }
     }
 }
 """
@@ -129,6 +137,7 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
         try:
             if "graphql" in self.nlg_endpoint.url:
                 from sgqlc.endpoint.http import HTTPEndpoint
+                logging.getLogger("sgqlc.endpoint.http").setLevel(logging.WARNING)
 
                 api_key = os.environ.get("API_KEY")
                 headers = [{"Authorization": api_key}] if api_key else []
