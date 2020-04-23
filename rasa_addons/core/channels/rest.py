@@ -105,6 +105,18 @@ class BotfrontRestOutput(CollectingOutputChannel):
             )
         )
 
+    async def send_elements(
+        self, recipient_id: Text, elements: Iterable[Dict[Text, Any]], **kwargs: Any
+    ) -> None:
+        attachment = {
+            "type": "template",
+            "payload": {"template_type": "generic", "elements": elements},
+        }
+        await self._persist_message(
+            self._message(
+                recipient_id, attachment=attachment, metadata=kwargs.get("metadata", {}),
+            )
+        )
 
 class BotfrontRestInput(RestInput):
     def get_metadata(self, request: Request) -> Optional[Dict[Text, Any]]:

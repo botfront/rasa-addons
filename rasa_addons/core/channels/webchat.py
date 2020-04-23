@@ -70,16 +70,15 @@ class WebchatOutput(SocketIOOutput):
     ) -> None:
         """Sends elements to the output."""
 
-        for element in elements:
-            message = {
-                "attachment": {
-                    "type": "template",
-                    "payload": {"template_type": "generic", "elements": element},
-                },
-                "metadata": kwargs.get("metadata", {}),
-            }
+        message = {
+            "attachment": {
+                "type": "template",
+                "payload": {"template_type": "generic", "elements": elements},
+            },
+            "metadata": kwargs.get("metadata", {}),
+        }
 
-            await self._send_message(self.sid, message)
+        await self._send_message(self.sid, message)
 
     async def send_custom_json(
         self, recipient_id: Text, json_message: Dict[Text, Any], **kwargs: Any
