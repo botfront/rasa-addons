@@ -5,6 +5,7 @@ from typing import Any, List, Text, Dict
 import rasa.utils.io
 import re
 from rasa.core.actions.action import ACTION_LISTEN_NAME
+from rasa.core.constants import FALLBACK_POLICY_PRIORITY
 
 from rasa.core.domain import Domain
 from rasa.core.policies.policy import Policy, confidence_scores_for
@@ -21,7 +22,7 @@ class BotfrontDisambiguationPolicy(Policy):
 
     def __init__(
         self,
-        priority: int = 4,
+        priority: int = FALLBACK_POLICY_PRIORITY,
         disambiguation_trigger: str = "$0 < 2 * $1",
         fallback_trigger: float = 0.30,
         deny_suggestions: Text = "deny_suggestions",

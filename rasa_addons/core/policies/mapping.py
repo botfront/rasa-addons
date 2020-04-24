@@ -17,6 +17,7 @@ from rasa.core.domain import Domain
 from rasa.core.events import ActionExecuted
 from rasa.core.policies.policy import Policy
 from rasa.core.trackers import DialogueStateTracker
+from rasa.core.constants import MAPPING_POLICY_PRIORITY
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class BotfrontMappingPolicy(Policy):
         "triggers": [{"trigger": r"^map\..+", "action": "action_botfront_mapping"}]
     }
 
-    def __init__(self, priority: int = 999, **kwargs: Any) -> None:
+    def __init__(self, priority: int = MAPPING_POLICY_PRIORITY, **kwargs: Any) -> None:
         super(BotfrontMappingPolicy, self).__init__(priority=priority)
         self._load_params(**kwargs)
 
