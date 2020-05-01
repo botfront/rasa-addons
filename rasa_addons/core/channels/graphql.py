@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 CONFIG_QUERY = """
 query(
-    $projectId: String!
+    $projectId: String!, $environment: String
 ) {
     getConfig(
-        projectId: $projectId
+        projectId: $projectId,environment:$environment
     ) {
         credentials
         endpoints
@@ -26,9 +26,11 @@ query(
 
 async def get_config_via_graphql(bf_url, project_id):
     from sgqlc.endpoint.http import HTTPEndpoint
+
     logging.getLogger("sgqlc.endpoint.http").setLevel(logging.WARNING)
     import urllib.error
 
+    environment = os.environ.get("BOTFRONT_ENV", "development")
     api_key = os.environ.get("API_KEY")
     headers = [{"Authorization": api_key}] if api_key else []
     endpoint = HTTPEndpoint(bf_url, *headers)
@@ -36,10 +38,14 @@ async def get_config_via_graphql(bf_url, project_id):
     async def load():
         try:
             logger.debug(f"fetching endpoints and credentials at {bf_url}")
-            response = endpoint(CONFIG_QUERY, {"projectId": project_id})
+            response = endpoint(
+                CONFIG_QUERY, {"projectId": project_id, "environment": environment}
+            )
             if "errors" in response and response["errors"]:
                 raise urllib.error.URLError("Null response.")
-            return endpoint(CONFIG_QUERY, {"projectId": project_id})["data"]
+            return endpoint(
+                CONFIG_QUERY, {"projectId": project_id, "environment": environment}
+            )["data"]
         except urllib.error.URLError:
             logger.debug(
                 f"something went wrong at {bf_url} with the query {CONFIG_QUERY}"
@@ -48,4 +54,3 @@ async def get_config_via_graphql(bf_url, project_id):
 
     data = await load()
     return data["getConfig"]
-
