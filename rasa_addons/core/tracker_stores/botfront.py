@@ -238,12 +238,18 @@ class BotfrontTrackerStore(TrackerStore):
         # Iterate over list of keys to prevent runtime errors when deleting elements
         for key in list(self.trackers.keys()):
             tracker = self.trackers.get(key)
+            max_event_time = time.time() - self.tracker_persist_time
+            latest_event = tracker.get("latest_event_time", float("inf"))
+            if latest_event is None :
+                latest_event = float("inf")
             if (
                 tracker is not None
-                and tracker.get("latest_event_time", float("inf")) < time.time() - self.tracker_persist_time
+                and (latest_event < max_event_time)
             ):
                 logger.debug("SWEEPER: Removing tracker for user {}".format(key))
                 del self.trackers[key]
+                del self.trackers_info[key]
+
 
     @staticmethod
     def _serialize_tracker_to_dict(canonical_tracker):
