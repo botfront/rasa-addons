@@ -51,7 +51,9 @@ class BotfrontRestPlusInput(BotfrontRestInput):
                 config = await get_config_via_graphql(
                     os.environ["BF_URL"], os.environ["BF_PROJECT_ID"]
                 )
-                return config["credentials"]["rasa_addons.core.channels.rest_plus.BotfrontRestPlusInput"]
+                return response.json(
+                    config["credentials"]["rasa_addons.core.channels.rest_plus.BotfrontRestPlusInput"]
+                )
 
 
         @custom_webhook.route("/webhook", methods=["POST"])
