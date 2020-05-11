@@ -235,15 +235,25 @@ class BotfrontTrackerStore(TrackerStore):
         return self._convert_tracker(sender_id, current_tracker)
 
     def sweep(self):
-        # Iterate over list of keys to prevent runtime errors when deleting elements
-        for key in list(self.trackers.keys()):
+        try: ## wraped in a try block so if and exception occurs it does not stopp the sweep mechanism
+           for key in list(self.trackers.keys()):# Iterate over list of keys to prevent runtime errors when deleting elements
             tracker = self.trackers.get(key)
+            max_event_time = time.time() - self.tracker_persist_time
+            latest_event = tracker.get("latest_event_time", float("inf"))
+            if latest_event is None :
+                latest_event = float("inf")
             if (
                 tracker is not None
-                and tracker.get("latest_event_time", float("inf")) < time.time() - self.tracker_persist_time
+                and (latest_event < max_event_time)
             ):
                 logger.debug("SWEEPER: Removing tracker for user {}".format(key))
                 del self.trackers[key]
+                del self.trackers_info[key]
+        except Exception as e:
+            print(e)
+            pass
+        
+
 
     @staticmethod
     def _serialize_tracker_to_dict(canonical_tracker):
