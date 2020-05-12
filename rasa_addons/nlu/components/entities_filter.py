@@ -7,7 +7,6 @@ import logging
 import os
 
 import requests
-import simplejson
 from rasa.nlu.components import Component
 from typing import Any, List, Optional, Text, Dict
 
@@ -23,7 +22,15 @@ class EntitiesFilter(Component):
 
     name = "EntitiesFilter"
     provides = ["entities"]
-    defaults = {"entities": {}}
+    defaults = {
+        "entities": {},
+        "extractor_names": [
+            "DIETClassifier",
+            "SpacyEntityExtractor",
+            "CRFEntityExtractor",
+            "MitieEntityExtractor",
+        ],
+    }
 
     def __init__(self, component_config=None):
         # type: (Text, Optional[List[Text]]) -> None
@@ -47,7 +54,7 @@ class EntitiesFilter(Component):
         # get crf and duckling entities
         message_entities = message.get("entities")
         entities_to_filter = filter(
-            lambda e: e["extractor"] in ["ner_crf", "ner_duckling_http"],
+            lambda e: e["extractor"] in self.component_config["extractor_names"],
             message_entities,
         )
         indices_to_remove = []

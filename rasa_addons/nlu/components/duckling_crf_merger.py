@@ -23,7 +23,13 @@ class DucklingCrfMerger(Component):
 
     defaults = {
         "entities": None,
-        "duckling_name": "rasa_addons.nlu.components.duckling_http_extractor.DucklingHTTPExtractor",
+        "duckling_name": "DucklingHTTPExtractor",
+        "extractor_names": [
+            "DIETClassifier",
+            "SpacyEntityExtractor",
+            "CRFEntityExtractor",
+            "MitieEntityExtractor",
+        ],
     }
 
     def __init__(self, component_config=None):
@@ -41,7 +47,7 @@ class DucklingCrfMerger(Component):
         # type: (Message, **Any) -> None
         crf_entities = list(
             filter(
-                lambda e: e["extractor"] == "ner_crf"
+                lambda e: e["extractor"] in self.component_config["extractor_names"]
                 and e["entity"] in self.component_config["entities"].keys(),
                 message.get("entities"),
             )
