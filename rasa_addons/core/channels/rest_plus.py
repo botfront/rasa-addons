@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 class BotfrontRestPlusInput(BotfrontRestInput):
     @classmethod
     def from_credentials(cls, credentials: Optional[Dict[Text, Any]]) -> InputChannel:
-        return cls(**credentials)
+        credentials = credentials or {}
+        return cls(credentials.get("config"))
 
     def __init__(self, config: Optional[Dict[Text, Any]] = None):
         self.config = config
@@ -52,7 +53,9 @@ class BotfrontRestPlusInput(BotfrontRestInput):
                     os.environ["BF_URL"], os.environ["BF_PROJECT_ID"]
                 )
                 return response.json(
-                    config["credentials"]["rasa_addons.core.channels.rest_plus.BotfrontRestPlusInput"]
+                    config["credentials"][
+                        "rasa_addons.core.channels.rest_plus.BotfrontRestPlusInput"
+                    ]["props"]
                 )
 
 
