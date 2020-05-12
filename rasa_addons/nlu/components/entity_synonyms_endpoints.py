@@ -15,8 +15,6 @@ from rasa.nlu.extractors.entity_synonyms import EntitySynonymMapper
 class EntitySynonymBegin(EntitySynonymMapper):
     name = "EntitySynonymBegin"
 
-    provides = ["entities"]
-
     def process(self, message, **kwargs):
         # type: (Message, **Any) -> None
         updated_entities = message.get("entities", [])[:]
@@ -49,8 +47,6 @@ class EntitySynonymBegin(EntitySynonymMapper):
 
 class EntitySynonymEnd(EntitySynonymMapper):
     name = "EntitySynonymEnd"
-
-    provides = ["entities"]
 
     def process(self, message, **kwargs):
         # type: (Message, **Any) -> None

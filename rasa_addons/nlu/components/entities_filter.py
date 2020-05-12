@@ -21,7 +21,6 @@ class EntitiesFilter(Component):
     """Filter entities wrt intent"""
 
     name = "EntitiesFilter"
-    provides = ["entities"]
     defaults = {
         "entities": {},
         "extractor_names": [

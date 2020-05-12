@@ -15,8 +15,6 @@ from fuzzy_matcher import process
 class Gazette(Component):
     name = "Gazette"
 
-    provides = ["entities"]
-
     defaults = {"max_num_suggestions": 5, "entities": []}
 
     def __init__(
