@@ -15,7 +15,7 @@ It works with actions ``rasa_addons.core.actions.ActionBotfrontDisambiguation``,
 
 ### Example usage
 
-```
+```yaml
 policies:
   ...
   - name: rasa_addons.core.policies.BotfrontDisambiguationPolicy
@@ -35,7 +35,7 @@ Botfront introduces the notion of "canonical" training examples, which provide a
 
 The Botfront Disambiguation Policy uses canonical status to provide localized text for the suggestion buttons shown to users during disambiguation. In order to enable this feature, the NLU pipeline for each language model needs to be extended in the following way:
 
-```
+```yaml
 pipeline:
   ...
   - name: rasa_addons.nlu.components.intent_ranking_canonical_example_injector.IntentRankingCanonicalExampleInjector
@@ -74,7 +74,7 @@ This policy implements regular expression-based direct mapping from intent to ac
 
 ### Example usage
 
-```
+```yaml
 policies:
   ...
   - name: rasa_addons.core.policies.BotfrontMappingPolicy
@@ -94,7 +94,7 @@ The default action ActionBotfrontMapping takes the intent that triggered the map
 
 ### Example usage
 
-```
+```yaml
 credentials:
   ...
   rasa_addons.core.channels.webchat.WebchatInput:
@@ -110,7 +110,7 @@ Rest Input Channel with multilanguage and metadata support.
 
 ### Example usage
 
-```
+```yaml
 credentials:
   ...
   rasa_addons.core.channels.rest.BotfrontRestInput:
@@ -128,7 +128,7 @@ The new standard way to connect to the Botfront NLG endpoint. Note that support 
 
 ### Example usage
 
-```
+```yaml
 endpoints:
   ...
   nlg:
