@@ -25,15 +25,9 @@ class BotfrontDisambiguationPolicy(Policy):
         priority: int = FALLBACK_POLICY_PRIORITY,
         disambiguation_trigger: str = "$0 < 2 * $1",
         fallback_trigger: float = 0.30,
-        deny_suggestions: Text = "deny_suggestions",
-        excluded_intents: List = [],  # list of regex e.g ["^chitchat\..*", ...]
-        intent_mappings: Dict[
-            Text, Dict[Text, Text]
-        ] = {},  # {"basics.yes": {"en": "Yes", "fr": "Oui"}}
-        n_suggestions: int = 3,
-        disambiguation_title: Dict[Text, Text] = {
-            "en": "Sorry, I'm not sure I understood. Did you mean..."
-        },
+        disambiguation_template: Text = "utter_disambiguation",
+        excluded_intents: List = ["^chitchat\..*", "^basics\..*"],
+        n_suggestions: int = 2,
     ) -> None:
         super(BotfrontDisambiguationPolicy, self).__init__(priority=priority)
 
@@ -42,12 +36,10 @@ class BotfrontDisambiguationPolicy(Policy):
         self.fallback_default_confidence = 0.30
         self.disambiguation_action = "action_botfront_disambiguation"
         self.disambiguation_followup_action = "action_botfront_disambiguation_followup"
-        self.fallback_action = "action_botfront_fallback"  # utter_fallback
-        self.deny_suggestions = deny_suggestions
-        self.excluded_intents = excluded_intents + [self.deny_suggestions]
+        self.fallback_action = "action_botfront_fallback" # returns utter_fallback
+        self.disambiguation_template = disambiguation_template
+        self.excluded_intents = excluded_intents
         self.n_suggestions = n_suggestions
-        self.intent_mappings = intent_mappings
-        self.disambiguation_title = disambiguation_title
 
     def train(
         self,
@@ -57,30 +49,22 @@ class BotfrontDisambiguationPolicy(Policy):
     ) -> None:
         pass
 
-    def generate_disambiguation_message(self, intent_ranking, entities, language):
-        intent_names = [intent.get("name", "") for intent in intent_ranking]
-        intent_names = [
-            intent
-            for intent in intent_names
-            if len(
+    def generate_disambiguation_message(self, intent_ranking, entities):
+        intents = [
+            (
+                intent.get("name"),
+                self.fill_entity(intent.get("canonical", intent.get("name")), entities)
+            )
+            for intent in intent_ranking
+            if intent.get("name") is not None and len(
                 [
                     excl
                     for excl in self.excluded_intents
-                    if re.compile(excl).fullmatch(intent) != None
+                    if re.compile(excl).fullmatch(intent.get("name")) != None
                 ]
             )
             < 1
         ][: self.n_suggestions]
-
-        mapped_intents = [
-            (
-                name,
-                self.fill_entity(
-                    self.intent_mappings.get(name, {language: name})[language], entities
-                ),
-            )
-            for name in intent_names
-        ]
 
         entities_json = (
             json.dumps({e.get("entity"): e.get("value") for e in entities})
@@ -88,13 +72,8 @@ class BotfrontDisambiguationPolicy(Policy):
             else ""
         )
 
-        message_title = self.disambiguation_title[language]
-        deny_text = self.intent_mappings.get(
-            self.deny_suggestions, {"en": "Something else"}
-        )[language]
-
         buttons = []
-        for intent in mapped_intents:
+        for intent in intents:
             buttons.append(
                 {
                     "title": intent[1],
@@ -102,15 +81,7 @@ class BotfrontDisambiguationPolicy(Policy):
                     "payload": "/{}{}".format(intent[0], entities_json),
                 }
             )
-
-        buttons.append(
-            {
-                "title": deny_text,
-                "type": "postback",
-                "payload": "/{}".format(self.deny_suggestions),
-            }
-        )
-        return {"title": message_title, "buttons": buttons}
+        return {"template": self.disambiguation_template, "buttons": buttons}
 
     @staticmethod
     def fill_entity(template, entities):
@@ -170,9 +141,7 @@ class BotfrontDisambiguationPolicy(Policy):
     ) -> List[float]:
 
         parse_data = tracker.latest_message.parse_data
-        metadata = tracker.latest_message.metadata
         entities = parse_data.get("entities", [])
-        language = metadata.get("language", "en")
         intent_ranking = parse_data.get("intent_ranking", [])
         can_apply = tracker.latest_action_name == ACTION_LISTEN_NAME
         should_fallback = can_apply and self._should_fallback(
@@ -205,7 +174,7 @@ class BotfrontDisambiguationPolicy(Policy):
         elif should_disambiguate:
             logger.debug("Triggering disambiguation")
             disambiguation_message = self.generate_disambiguation_message(
-                intent_ranking, entities, language
+                intent_ranking, entities,
             )
             slot_set = self.set_slot(tracker, disambiguation_message)
             if slot_set:
@@ -229,11 +198,9 @@ class BotfrontDisambiguationPolicy(Policy):
             "priority": self.priority,
             "disambiguation_trigger": self.disambiguation_trigger,
             "fallback_trigger": self.fallback_trigger,
-            "deny_suggestions": self.deny_suggestions,
+            "disambiguation_template": self.disambiguation_template,
             "excluded_intents": self.excluded_intents,
             "n_suggestions": self.n_suggestions,
-            "intent_mappings": self.intent_mappings,
-            "disambiguation_title": self.disambiguation_title,
         }
         rasa.utils.io.create_directory_for_file(config_file)
         rasa.utils.io.dump_obj_as_json_to_file(config_file, meta)
