@@ -56,72 +56,22 @@ def test_localization_and_entity_substitution():
     policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger="$0 < 2 * $1",
         fallback_trigger=0.30,
-        intent_mappings={
-            "hola.test": {
-                "en": "Testen {entity1}",
-                "es": "Testes {entity1}",
-                "fr": "Testfr {entity1}",
-            },
-            "intentA": {"en": "IntentAen", "es": "IntentAes", "fr": "IntentAfr"},
-            "intentB": {"en": "IntentBen", "es": "IntentBes", "fr": "IntentBfr"},
-            "deny_suggestions": {
-                "en": "Something else",
-                "es": "algo diferente",
-                "fr": "autre chose",
-            },
-        },
-        disambiguation_title={
-            "en": "Do you mean...",
-            "es": "Querías decir...",
-            "fr": "Voulez-vous dire...",
-        },
+        n_suggestions=3,
     )
 
     intent_ranking = [
-        {"name": "intentA", "confidence": 0.6},
-        {"name": "intentB", "confidence": 0.4},
-        {"name": "hola.test", "confidence": 0.4},
+        {"name": "intentA", "confidence": 0.6, "canonical": "intent <A>"},
+        {"name": "intentB", "confidence": 0.4, "canonical": "intent <B>"},
+        {"name": "hola.test", "confidence": 0.4, "canonical": "Hola, test!"},
     ]
     entities = [{"entity": "entity1", "value": "OH!"}]
 
-    # English without entities
-    assert policy.generate_disambiguation_message(intent_ranking, [], "en") == {
-        "title": "Do you mean...",
+    assert policy.generate_disambiguation_message(intent_ranking, entities) == {
+        "template": "utter_disambiguation",
         "buttons": [
-            {"title": "IntentAen", "type": "postback", "payload": "/intentA"},
-            {"title": "IntentBen", "type": "postback", "payload": "/intentB"},
-            {"title": "Testen ", "type": "postback", "payload": "/hola.test"},
-            {
-                "title": "Something else",
-                "type": "postback",
-                "payload": "/deny_suggestions",
-            },
-        ],
-    }
-    # French with entities and entity substitution
-    assert policy.generate_disambiguation_message(intent_ranking, entities, "fr") == {
-        "title": "Voulez-vous dire...",
-        "buttons": [
-            {
-                "title": "IntentAfr",
-                "type": "postback",
-                "payload": '/intentA{"entity1": "OH!"}',
-            },
-            {
-                "title": "IntentBfr",
-                "type": "postback",
-                "payload": '/intentB{"entity1": "OH!"}',
-            },
-            {
-                "title": "Testfr OH!",
-                "type": "postback",
-                "payload": '/hola.test{"entity1": "OH!"}',
-            },
-            {
-                "title": "autre chose",
-                "type": "postback",
-                "payload": "/deny_suggestions",
-            },
+            {"title": "intent <A>", "type": "postback", "payload": "/intentA{\"entity1\": \"OH!\"}"},
+            {"title": "intent <B>", "type": "postback", "payload": "/intentB{\"entity1\": \"OH!\"}"},
+            {"title": "Hola, test!", "type": "postback", "payload": "/hola.test{\"entity1\": \"OH!\"}"},
         ],
     }
 
@@ -130,43 +80,20 @@ def test_intent_exclusion():
     policy = BotfrontDisambiguationPolicy(
         disambiguation_trigger="$0 < 2 * $1",
         fallback_trigger=0.30,
+        n_suggestions=3,
         excluded_intents=["^hola\..*"],
-        intent_mappings={
-            "hola.test": {
-                "en": "Testen {entity1}",
-                "es": "Testes {entity1}",
-                "fr": "Testfr {entity1}",
-            },
-            "intentA": {"en": "IntentAen", "es": "IntentAes", "fr": "IntentAfr"},
-            "intentB": {"en": "IntentBen", "es": "IntentBes", "fr": "IntentBfr"},
-            "deny_suggestions": {
-                "en": "Something else",
-                "es": "algo diferente",
-                "fr": "autre chose",
-            },
-        },
-        disambiguation_title={
-            "en": "Do you mean...",
-            "es": "Querías decir...",
-            "fr": "Voulez-vous dire...",
-        },
     )
 
     intent_ranking = [
-        {"name": "intentA", "confidence": 0.6},
-        {"name": "intentB", "confidence": 0.4},
-        {"name": "hola.test", "confidence": 0.4},
+        {"name": "intentA", "confidence": 0.6, "canonical": "intent <A>"},
+        {"name": "intentB", "confidence": 0.4, "canonical": "intent <B>"},
+        {"name": "hola.test", "confidence": 0.4, "canonical": "Hola, test!"},
     ]
 
-    assert policy.generate_disambiguation_message(intent_ranking, [], "en") == {
-        "title": "Do you mean...",
+    assert policy.generate_disambiguation_message(intent_ranking, []) == {
+        "template": "utter_disambiguation",
         "buttons": [
-            {"title": "IntentAen", "type": "postback", "payload": "/intentA"},
-            {"title": "IntentBen", "type": "postback", "payload": "/intentB"},
-            {
-                "title": "Something else",
-                "type": "postback",
-                "payload": "/deny_suggestions",
-            },
+            {"title": "intent <A>", "type": "postback", "payload": "/intentA"},
+            {"title": "intent <B>", "type": "postback", "payload": "/intentB"},
         ],
     }

@@ -34,14 +34,18 @@ class ActionBotfrontDisambiguation(Action):
             if isinstance(event, SlotSet) and event.key == "disambiguation_message":
                 message = event.value
                 break
-        if message:
-            return [
-                create_bot_utterance(
-                    {"text": message["title"], "buttons": message["buttons"]}
-                )
-            ]
-        else:
-            return []
+        if not message: return []
+        template = await nlg.generate(
+            message["template"],
+            tracker,
+            output_channel.name(),
+        )
+        return [
+            create_bot_utterance({
+                "text": template.get("text", ""),
+                "buttons": message.get("buttons", []) + template.get("buttons", []),
+            })
+        ]
 
 
 class ActionBotfrontDisambiguationFollowup(Action):
