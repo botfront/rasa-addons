@@ -19,12 +19,12 @@ It works with actions ``rasa_addons.core.actions.ActionBotfrontDisambiguation``,
 policies:
   ...
   - name: rasa_addons.core.policies.BotfrontDisambiguationPolicy
-    fallback_trigger: 0.30
-    disambiguation_trigger: '$0 < 2 * $1'
-    disambiguation_template: 'utter_disambiguation'
-    n_suggestions: 2
+    fallback_trigger: 0.30 # default value
+    disambiguation_trigger: '$0 < 2 * $1' # default value
+    disambiguation_template: 'utter_disambiguation' # default value
+    n_suggestions: 2 # default value
     excluded_intents:
-      - ^chitchat\..*
+      - ^chitchat\..* # default value
       - ^basics\..*
   ...
 ```
