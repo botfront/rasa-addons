@@ -5,6 +5,7 @@ from sanic import Sanic, Blueprint, response
 from sanic.request import Request
 from sanic.response import HTTPResponse
 from socketio import AsyncServer
+from rasa.utils.common import raise_warning
 
 from typing import Text, List, Dict, Any, Optional, Callable, Iterable, Awaitable
 
@@ -18,6 +19,10 @@ class WebchatOutput(SocketIOOutput):
     @classmethod
     def name(cls):
         return "webchat"
+
+    def __init__(self, sio: AsyncServer, bot_message_evt: Text) -> None: # until SocketIOOutput implement comes out
+        self.sio = sio
+        self.bot_message_evt = bot_message_evt
 
     async def _send_message(self, socket_id: Text, response: Any) -> None:
         """Sends a message to the recipient using the bot event."""
@@ -34,7 +39,7 @@ class WebchatOutput(SocketIOOutput):
             text_message = {"text": message_parts[i]}
             if i == len(message_parts) - 1:
                 text_message["metadata"] = kwargs.get("metadata", {})
-            await self._send_message(self.sid, text_message)
+            await self._send_message(recipient_id, text_message)
 
     async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
@@ -45,7 +50,7 @@ class WebchatOutput(SocketIOOutput):
             "attachment": {"type": "image", "payload": {"src": image}},
             "metadata": kwargs.get("metadata", {}),
         }
-        await self._send_message(self.sid, message)
+        await self._send_message(recipient_id, message)
 
     async def send_text_with_buttons(
         self,
@@ -63,7 +68,7 @@ class WebchatOutput(SocketIOOutput):
             "metadata": kwargs.get("metadata", {}),
         }
 
-        await self._send_message(self.sid, message)
+        await self._send_message(recipient_id, message)
 
     async def send_elements(
         self, recipient_id: Text, elements: Iterable[Dict[Text, Any]], **kwargs: Any
@@ -78,14 +83,14 @@ class WebchatOutput(SocketIOOutput):
             "metadata": kwargs.get("metadata", {}),
         }
 
-        await self._send_message(self.sid, message)
+        await self._send_message(recipient_id, message)
 
     async def send_custom_json(
         self, recipient_id: Text, json_message: Dict[Text, Any], **kwargs: Any
     ) -> None:
         """Sends custom json to the output"""
 
-        json_message.setdefault("room", self.sid)
+        json_message.setdefault("room", recipient_id)
 
         await self.sio.emit(
             self.bot_message_evt, **json_message, metadata=kwargs.get("metadata", {})
@@ -96,7 +101,7 @@ class WebchatOutput(SocketIOOutput):
     ) -> None:
         """Sends an attachment to the user."""
         await self._send_message(
-            self.sid, {"attachment": attachment, "metadata": kwargs.get("metadata", {})}
+            recipient_id, {"attachment": attachment, "metadata": kwargs.get("metadata", {})}
         )
 
 
@@ -131,6 +136,19 @@ class WebchatInput(SocketIOInput):
         self.namespace = namespace
         self.socketio_path = socketio_path
         self.cors_allowed_origins = cors_allowed_origins
+        self.sio = None
+
+    def get_output_channel(self) -> Optional["OutputChannel"]:
+        if self.sio is None:
+            raise_warning(
+                "SocketIO output channel cannot be recreated. "
+                "This is expected behavior when using multiple Sanic "
+                "workers or multiple Rasa Open Source instances. "
+                "Please use a different channel for external events in these "
+                "scenarios."
+            )
+            return
+        return WebchatOutput(self.sio, self.bot_message_evt)
 
     def get_metadata(self, request: Request) -> Optional[Dict[Text, Any]]:
         return request.get("customData", {})
@@ -146,6 +164,9 @@ class WebchatInput(SocketIOInput):
         socketio_webhook = SocketBlueprint(
             sio, self.socketio_path, "socketio_webhook", __name__
         )
+
+        # make sio object static to use in get_output_channel
+        self.sio = sio
 
         @socketio_webhook.route("/", methods=["GET"])
         async def health(_: Request) -> HTTPResponse:
@@ -165,12 +186,14 @@ class WebchatInput(SocketIOInput):
                 data = {}
             if "session_id" not in data or data["session_id"] is None:
                 data["session_id"] = uuid.uuid4().hex
+            if self.session_persistence:
+                sio.enter_room(sid, data["session_id"])
             await sio.emit("session_confirm", data["session_id"], room=sid)
             logger.debug(f"User {sid} connected to socketIO endpoint.")
 
         @sio.on(self.user_message_evt, namespace=self.namespace)
         async def handle_message(sid: Text, data: Dict) -> Any:
-            output_channel = WebchatOutput(sio, sid, self.bot_message_evt)
+            output_channel = WebchatOutput(sio, self.bot_message_evt)
 
             if self.session_persistence:
                 if not data.get("session_id"):
