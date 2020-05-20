@@ -101,7 +101,7 @@ class BotfrontMappingPolicy(Policy):
             latest_action = tracker.get_last_event_for(ActionExecuted)
             assert latest_action.action_name == action
 
-            if latest_action.policy == type(self).__name__:
+            if type(self).__name__ in latest_action.policy:
                 # this ensures that we only predict listen, if we predicted
                 # the mapped action
                 logger.debug(
