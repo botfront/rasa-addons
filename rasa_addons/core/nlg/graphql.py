@@ -143,6 +143,13 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
                 headers = [{"Authorization": api_key}] if api_key else []
                 response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(NLG_QUERY, body)
                 response = response["data"]["getResponse"]
+                if "customText" in response: response["text"] = response.pop("customText")
+                if "customImage" in response: response["image"] = response.pop("customImage")
+                if "customButtons" in response: response["buttons"] = response.pop("customButtons")
+                if "customElements" in response: response["elements"] = response.pop("customElements")
+                if "customAttachment" in response: response["attachment"] = response.pop("customAttachment")
+                metadata = response.pop("metadata", {}) or {}
+                for key in metadata: response[key] = metadata[key]
             else:
                 response = await self.nlg_endpoint.request(
                     method="post", json=body, timeout=DEFAULT_REQUEST_TIMEOUT

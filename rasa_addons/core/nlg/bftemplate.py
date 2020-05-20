@@ -75,7 +75,7 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
         )
         language = tracker.latest_message.metadata.get("language") or fallback_language
 
-        return self.generate_from_slots(
+        message = self.generate_from_slots(
             template_name,
             filled_slots,
             output_channel,
@@ -83,6 +83,11 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
             language=language,
             fallback_language=fallback_language,
         )
+        if "language" in message: del message["language"]
+        metadata = message.pop("metadata", {}) or {}
+        for key in metadata: message[key] = metadata[key]
+
+        return message
 
     def generate_from_slots(
         self,
