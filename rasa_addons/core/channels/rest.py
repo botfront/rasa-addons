@@ -20,6 +20,7 @@ class BotfrontRestOutput(CollectingOutputChannel):
         text: Text = None,
         image: Text = None,
         buttons: List[Dict[Text, Any]] = None,
+        quick_replies: List[Dict[Text, Any]] = None,
         attachment: Text = None,
         custom: Dict[Text, Any] = None,
         metadata: Dict[Text, Any] = {},
@@ -30,7 +31,8 @@ class BotfrontRestOutput(CollectingOutputChannel):
             "recipient_id": recipient_id,
             "text": text,
             "image": image,
-            "quick_replies": buttons,  # compatibility with Rasa-webchat
+            "quick_replies": quick_replies, 
+            "buttons": buttons, 
             "attachment": attachment,
             "custom": custom,
             "metadata": metadata,
