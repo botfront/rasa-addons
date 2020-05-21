@@ -20,7 +20,9 @@ class WebchatOutput(SocketIOOutput):
     def name(cls):
         return "webchat"
 
-    def __init__(self, sio: AsyncServer, bot_message_evt: Text) -> None: # until SocketIOOutput implement comes out
+    def __init__(
+        self, sio: AsyncServer, bot_message_evt: Text
+    ) -> None:  # until SocketIOOutput implement comes out
         self.sio = sio
         self.bot_message_evt = bot_message_evt
 
@@ -63,8 +65,26 @@ class WebchatOutput(SocketIOOutput):
 
         message = {
             "text": text,
+            "buttons": [],
+            "buttons": buttons,
+            "metadata": kwargs.get("metadata", {}),
+        }
+
+        await self._send_message(recipient_id, message)
+
+    async def send_quick_replies(
+        self,
+        recipient_id: Text,
+        text: Text,
+        quick_replies: List[Dict[Text, Any]],
+        **kwargs: Any,
+    ) -> None:
+        """Sends quick replies to the output."""
+
+        message = {
+            "text": text,
             "quick_replies": [],
-            "quick_replies": buttons,
+            "quick_replies": quick_replies,
             "metadata": kwargs.get("metadata", {}),
         }
 
@@ -101,7 +121,8 @@ class WebchatOutput(SocketIOOutput):
     ) -> None:
         """Sends an attachment to the user."""
         await self._send_message(
-            recipient_id, {"attachment": attachment, "metadata": kwargs.get("metadata", {})}
+            recipient_id,
+            {"attachment": attachment, "metadata": kwargs.get("metadata", {})},
         )
 
 

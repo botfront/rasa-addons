@@ -96,6 +96,22 @@ class BotfrontRestOutput(CollectingOutputChannel):
             )
         )
 
+    async def send_quick_replies(
+        self,
+        recipient_id: Text,
+        text: Text,
+        quick_replies: List[Dict[Text, Any]],
+        **kwargs: Any,
+    ) -> None:
+        await self._persist_message(
+            self._message(
+                recipient_id,
+                text=text,
+                quick_replies=quick_replies,
+                metadata=kwargs.get("metadata", {}),
+            )
+        )
+
     async def send_custom_json(
         self, recipient_id: Text, json_message: Dict[Text, Any], **kwargs: Any
     ) -> None:
@@ -114,9 +130,12 @@ class BotfrontRestOutput(CollectingOutputChannel):
         }
         await self._persist_message(
             self._message(
-                recipient_id, attachment=attachment, metadata=kwargs.get("metadata", {}),
+                recipient_id,
+                attachment=attachment,
+                metadata=kwargs.get("metadata", {}),
             )
         )
+
 
 class BotfrontRestInput(RestInput):
     def get_metadata(self, request: Request) -> Optional[Dict[Text, Any]]:

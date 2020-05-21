@@ -32,10 +32,11 @@ query(
     ) {
         metadata
         ...on TextPayload { text }
-        ...on QuickReplyPayload { text, buttons { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
+        ...on QuickRepliesPayload { text, quick_replies { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
         ...on ImagePayload { text, image }
         ...on CarouselPayload { template_type, elements { ...CarouselElementFields } }
         ...on CustomPayload { customText: text, customImage: image, customButtons: buttons, customElements: elements, custom, customAttachment: attachment }
+        ...on TextWithButtonsPayload { text, buttons { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
     }
 }
 """
@@ -137,19 +138,29 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
         try:
             if "graphql" in self.nlg_endpoint.url:
                 from sgqlc.endpoint.http import HTTPEndpoint
+
                 logging.getLogger("sgqlc.endpoint.http").setLevel(logging.WARNING)
 
                 api_key = os.environ.get("API_KEY")
                 headers = [{"Authorization": api_key}] if api_key else []
-                response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(NLG_QUERY, body)
+                response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(
+                    NLG_QUERY, body
+                )
+                print(response)
                 response = response["data"]["getResponse"]
-                if "customText" in response: response["text"] = response.pop("customText")
-                if "customImage" in response: response["image"] = response.pop("customImage")
-                if "customButtons" in response: response["buttons"] = response.pop("customButtons")
-                if "customElements" in response: response["elements"] = response.pop("customElements")
-                if "customAttachment" in response: response["attachment"] = response.pop("customAttachment")
+                if "customText" in response:
+                    response["text"] = response.pop("customText")
+                if "customImage" in response:
+                    response["image"] = response.pop("customImage")
+                if "customButtons" in response:
+                    response["buttons"] = response.pop("customButtons")
+                if "customElements" in response:
+                    response["elements"] = response.pop("customElements")
+                if "customAttachment" in response:
+                    response["attachment"] = response.pop("customAttachment")
                 metadata = response.pop("metadata", {}) or {}
-                for key in metadata: response[key] = metadata[key]
+                for key in metadata:
+                    response[key] = metadata[key]
             else:
                 response = await self.nlg_endpoint.request(
                     method="post", json=body, timeout=DEFAULT_REQUEST_TIMEOUT
@@ -160,6 +171,7 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
             return {"text": template_name}
 
         if self.validate_response(response):
+            print(response)
             return response
         else:
             logger.error("NLG web endpoint returned an invalid response.")
