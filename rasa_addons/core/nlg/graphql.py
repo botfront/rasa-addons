@@ -171,7 +171,6 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
             return {"text": template_name}
 
         if self.validate_response(response):
-            print(response)
             return response
         else:
             logger.error("NLG web endpoint returned an invalid response.")
