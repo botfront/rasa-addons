@@ -65,7 +65,6 @@ class WebchatOutput(SocketIOOutput):
 
         message = {
             "text": text,
-            "buttons": [],
             "buttons": buttons,
             "metadata": kwargs.get("metadata", {}),
         }
@@ -83,7 +82,6 @@ class WebchatOutput(SocketIOOutput):
 
         message = {
             "text": text,
-            "quick_replies": [],
             "quick_replies": quick_replies,
             "metadata": kwargs.get("metadata", {}),
         }

@@ -33,10 +33,10 @@ query(
         metadata
         ...on TextPayload { text }
         ...on QuickRepliesPayload { text, quick_replies { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
+        ...on TextWithButtonsPayload { text, buttons { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
         ...on ImagePayload { text, image }
         ...on CarouselPayload { template_type, elements { ...CarouselElementFields } }
-        ...on CustomPayload { customText: text, customImage: image, customButtons: buttons, customElements: elements, custom, customAttachment: attachment }
-        ...on TextWithButtonsPayload { text, buttons { title, type, ...on WebUrlButton { url }, ...on PostbackButton { payload } } }
+        ...on CustomPayload { customText: text, customImage: image, customQuickReplies: quick_replies, customButtons: buttons, customElements: elements, custom, customAttachment: attachment }
     }
 }
 """
@@ -146,12 +146,13 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
                 response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(
                     NLG_QUERY, body
                 )
-                print(response)
                 response = response["data"]["getResponse"]
                 if "customText" in response:
                     response["text"] = response.pop("customText")
                 if "customImage" in response:
                     response["image"] = response.pop("customImage")
+                if "customQuickReplies" in response:
+                    response["quick_replies"] = response.pop("customQuickReplies")
                 if "customButtons" in response:
                     response["buttons"] = response.pop("customButtons")
                 if "customElements" in response:
