@@ -146,7 +146,7 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
                 response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(
                     NLG_QUERY, body
                 )
-                response = response["data"]["getResponse"]
+                response = response.get("data", {}).get("getResponse", {})
                 if "customText" in response:
                     response["text"] = response.pop("customText")
                 if "customImage" in response:
