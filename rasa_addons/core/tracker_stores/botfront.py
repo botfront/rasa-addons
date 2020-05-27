@@ -85,6 +85,7 @@ class BotfrontTrackerStore(TrackerStore):
         api_key = os.environ.get("API_KEY")
         headers = [{"Authorization": api_key}] if api_key else []
         self.graphql_endpoint = HTTPEndpoint(url, *headers)
+        self.url = url
         self.environement = os.environ.get("BOTFRONT_ENV", "development")
 
         super(BotfrontTrackerStore, self).__init__(domain)
@@ -93,11 +94,16 @@ class BotfrontTrackerStore(TrackerStore):
     def _graphql_query(self, query, params):
         try:
             response = self.graphql_endpoint(query, params)
-            if response.get("errors") is not None and response.get("data") is None:
-                raise urllib.error.URLError("Null response.")
-            return response["data"]
-        except urllib.error.URLError:
-            logger.debug(f"something went wrong with the query {GET_TRACKER}")
+            if response.get("errors"):
+                raise urllib.error.URLError(
+                    ", ".join([e.get("message") for e in response.get("errors")])
+                )
+            return response.get("data")
+        except urllib.error.URLError as e:
+            message = e.reason
+            logger.error(
+                f"Something went wrong getting the tracker from {self.url}: {message}"
+            )
             return {}
 
     def _fetch_tracker(self, sender_id, lastIndex):
@@ -115,14 +121,24 @@ class BotfrontTrackerStore(TrackerStore):
     def _insert_tracker_gql(self, sender_id, tracker):
         data = self._graphql_query(
             INSERT_TRACKER,
-            {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker, "env": self.environement},
+            {
+                "senderId": sender_id,
+                "projectId": self.project_id,
+                "tracker": tracker,
+                "env": self.environement,
+            },
         )
         return data.get("insertTrackerStore")
 
     def _update_tracker_gql(self, sender_id, tracker):
         data = self._graphql_query(
             UPDATE_TRACKER,
-            {"senderId": sender_id, "projectId": self.project_id, "tracker": tracker, "env": self.environement},
+            {
+                "senderId": sender_id,
+                "projectId": self.project_id,
+                "tracker": tracker,
+                "env": self.environement,
+            },
         )
         return data.get("updateTrackerStore")
 
@@ -219,7 +235,7 @@ class BotfrontTrackerStore(TrackerStore):
         # retreive all new info since the last sync (given by last index)
         new_tracker_info = self._fetch_tracker(sender_id, last_index)
         current_tracker = self.trackers.get(sender_id)
-        # do not chane the order of these ifs 
+        # do not chane the order of these ifs
         # ortherwise you will get synchornication issues when working with multiple rasa instances
         # the tracker exist on the remote and may exist locally
         if new_tracker_info is not None:
@@ -227,35 +243,31 @@ class BotfrontTrackerStore(TrackerStore):
             tracker = self._update_tracker(sender_id, new_tracker_info.get("tracker"))
             return self._convert_tracker(sender_id, tracker)
 
-        
         # the tracker do not exist yet
-        if current_tracker is None: return None
+        if current_tracker is None:
+            return None
 
         # the tracker exist localy an there is no new infos
         return self._convert_tracker(sender_id, current_tracker)
 
     def sweep(self):
-        try: ## wraped in a try block so if and exception occurs it does not stopp the sweep mechanism
-           for key in list(self.trackers.keys()):# Iterate over list of keys to prevent runtime errors when deleting elements
-            tracker = self.trackers.get(key)
-            max_event_time = time.time() - self.tracker_persist_time
-            latest_event = tracker.get("latest_event_time", float("inf"))
-            if latest_event is None :
-                latest_event = float("inf")
-            if (
-                tracker is not None
-                and (latest_event < max_event_time)
-            ):
-                logger.debug("SWEEPER: Removing tracker for user {}".format(key))
-                del self.trackers[key]
-                del self.trackers_info[key]
+        try:  ## wraped in a try block so if and exception occurs it does not stopp the sweep mechanism
+            for key in list(
+                self.trackers.keys()
+            ):  # Iterate over list of keys to prevent runtime errors when deleting elements
+                tracker = self.trackers.get(key)
+                max_event_time = time.time() - self.tracker_persist_time
+                latest_event = tracker.get("latest_event_time", float("inf"))
+                if latest_event is None:
+                    latest_event = float("inf")
+                if tracker is not None and (latest_event < max_event_time):
+                    logger.debug("SWEEPER: Removing tracker for user {}".format(key))
+                    del self.trackers[key]
+                    del self.trackers_info[key]
         except Exception as e:
             print(e)
             pass
-        
-
 
     @staticmethod
     def _serialize_tracker_to_dict(canonical_tracker):
         return canonical_tracker.current_state(EventVerbosity.ALL)
-

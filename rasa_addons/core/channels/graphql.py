@@ -41,15 +41,16 @@ async def get_config_via_graphql(bf_url, project_id):
             response = endpoint(
                 CONFIG_QUERY, {"projectId": project_id, "environment": environment}
             )
-            if "errors" in response and response["errors"]:
-                raise urllib.error.URLError("Null response.")
+            if response.get("errors"):
+                raise urllib.error.URLError(
+                    ", ".join([e.get("message") for e in response.get("errors")])
+                )
             return endpoint(
                 CONFIG_QUERY, {"projectId": project_id, "environment": environment}
             )["data"]
-        except urllib.error.URLError:
-            logger.debug(
-                f"something went wrong at {bf_url} with the query {CONFIG_QUERY}"
-            )
+        except urllib.error.URLError as e:
+            message = e.reason
+            logger.error(f"Something went wrong fetching config at {bf_url}: {message}")
             return None
 
     data = await load()

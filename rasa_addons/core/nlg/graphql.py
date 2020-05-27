@@ -6,6 +6,7 @@ from rasa.core.nlg.generator import NaturalLanguageGenerator
 from rasa.core.trackers import DialogueStateTracker, EventVerbosity
 from rasa.utils.endpoints import EndpointConfig
 import os
+import urllib.error
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,10 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
                 response = HTTPEndpoint(self.nlg_endpoint.url, *headers)(
                     NLG_QUERY, body
                 )
+                if response.get("errors"):
+                    raise urllib.error.URLError(
+                        ", ".join([e.get("message") for e in response.get("errors")])
+                    )
                 response = response.get("data", {}).get("getResponse", {})
                 if "customText" in response:
                     response["text"] = response.pop("customText")
@@ -167,14 +172,15 @@ class GraphQLNaturalLanguageGenerator(NaturalLanguageGenerator):
                     method="post", json=body, timeout=DEFAULT_REQUEST_TIMEOUT
                 )
                 response = response[0]  # legacy route, use first message in seq
-        except Exception as e:
-            logger.error("NLG web endpoint returned an invalid response: {}".format(e))
+        except urllib.error.URLError as e:
+            message = e.reason
+            logger.error(f"NLG web endpoint at {self.nlg_endpoint.url} returned errors: {message}")
             return {"text": template_name}
 
         if self.validate_response(response):
             return response
         else:
-            logger.error("NLG web endpoint returned an invalid response.")
+            logger.error(f"NLG web endpoint at {self.nlg_endpoint.url} returned an invalid response.")
             return {"text": template_name}
 
     @staticmethod
