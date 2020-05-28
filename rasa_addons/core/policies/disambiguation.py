@@ -143,6 +143,8 @@ class BotfrontDisambiguationPolicy(Policy):
         parse_data = tracker.latest_message.parse_data
         entities = parse_data.get("entities", [])
         intent_ranking = parse_data.get("intent_ranking", [])
+        if len(intent_ranking) == 0 and parse_data.get("intent") is not None:
+            intent_ranking = [parse_data.get("intent")]
         can_apply = tracker.latest_action_name == ACTION_LISTEN_NAME
         should_fallback = can_apply and self._should_fallback(
             intent_ranking, self.fallback_trigger
