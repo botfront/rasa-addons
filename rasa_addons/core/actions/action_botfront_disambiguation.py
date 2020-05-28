@@ -43,7 +43,7 @@ class ActionBotfrontDisambiguation(Action):
         return [
             create_bot_utterance({
                 "text": template.get("text", ""),
-                "buttons": message.get("buttons", []) + template.get("buttons", []),
+                "quick_replies": message.get("quick_replies", []) + template.get("quick_replies", []),
             })
         ]
 
