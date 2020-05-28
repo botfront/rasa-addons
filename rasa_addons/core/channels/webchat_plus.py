@@ -7,7 +7,6 @@ from sanic.response import HTTPResponse
 from socketio import AsyncServer
 import os
 
-
 from typing import Text, List, Dict, Any, Optional, Callable, Iterable, Awaitable
 
 from rasa.core.channels.channel import UserMessage
@@ -69,6 +68,9 @@ class WebchatPlusInput(WebchatInput):
             sio, self.socketio_path, "socketio_webhook", __name__
         )
 
+        # make sio object static to use in get_output_channel
+        self.sio = sio
+
         @socketio_webhook.route("/", methods=["GET"])
         async def health(_: Request) -> HTTPResponse:
             return response.json({"status": "ok"})
@@ -87,7 +89,8 @@ class WebchatPlusInput(WebchatInput):
                 data = {}
             if "session_id" not in data or data["session_id"] is None:
                 data["session_id"] = uuid.uuid4().hex
-
+            if self.session_persistence:
+                sio.enter_room(sid, data["session_id"])
             if self.config is not None:
                 props = self.config
             else:
@@ -96,7 +99,7 @@ class WebchatPlusInput(WebchatInput):
                 )
                 props = config["credentials"][
                     "rasa_addons.core.channels.webchat_plus.WebchatPlusInput"
-                ]["props"]
+                ].get("props", {})
 
             await sio.emit(
                 "session_confirm",
@@ -107,7 +110,7 @@ class WebchatPlusInput(WebchatInput):
 
         @sio.on(self.user_message_evt, namespace=self.namespace)
         async def handle_message(sid: Text, data: Dict) -> Any:
-            output_channel = WebchatOutput(sio, sid, self.bot_message_evt)
+            output_channel = WebchatOutput(sio, self.bot_message_evt)
 
             if self.session_persistence:
                 if not data.get("session_id"):
@@ -133,4 +136,3 @@ class WebchatPlusInput(WebchatInput):
             await on_new_message(message)
 
         return socketio_webhook
-
