@@ -68,7 +68,7 @@ def test_localization_and_entity_substitution():
 
     assert policy.generate_disambiguation_message(intent_ranking, entities) == {
         "template": "utter_disambiguation",
-        "buttons": [
+        "quick_replies": [
             {"title": "intent <A>", "type": "postback", "payload": "/intentA{\"entity1\": \"OH!\"}"},
             {"title": "intent <B>", "type": "postback", "payload": "/intentB{\"entity1\": \"OH!\"}"},
             {"title": "Hola, test!", "type": "postback", "payload": "/hola.test{\"entity1\": \"OH!\"}"},
@@ -92,7 +92,7 @@ def test_intent_exclusion():
 
     assert policy.generate_disambiguation_message(intent_ranking, []) == {
         "template": "utter_disambiguation",
-        "buttons": [
+        "quick_replies": [
             {"title": "intent <A>", "type": "postback", "payload": "/intentA"},
             {"title": "intent <B>", "type": "postback", "payload": "/intentB"},
         ],

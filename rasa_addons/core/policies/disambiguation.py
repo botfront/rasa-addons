@@ -72,16 +72,16 @@ class BotfrontDisambiguationPolicy(Policy):
             else ""
         )
 
-        buttons = []
+        quick_replies = []
         for intent in intents:
-            buttons.append(
+            quick_replies.append(
                 {
                     "title": intent[1],
                     "type": "postback",
                     "payload": "/{}{}".format(intent[0], entities_json),
                 }
             )
-        return {"template": self.disambiguation_template, "buttons": buttons}
+        return {"template": self.disambiguation_template, "quick_replies": quick_replies}
 
     @staticmethod
     def fill_entity(template, entities):
@@ -93,7 +93,7 @@ class BotfrontDisambiguationPolicy(Policy):
 
     @staticmethod
     def set_slot(tracker, message):
-        if len(message["buttons"]) < 2:
+        if len(message["quick_replies"]) < 2:
             return None  # abort if only deny_suggestions button would be shown
         try:
             tracker.update(SlotSet("disambiguation_message", value=message))
