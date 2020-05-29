@@ -2,6 +2,7 @@ import logging
 import functools
 from typing import Dict, Text, Any, List, Union, Optional, Tuple
 from rasa_addons.core.actions.slot_rule_validator import validate_with_rule
+from rasa_addons.core.actions.submit_form_to_botfront import submit_form_to_botfront
 
 from rasa.core.actions.action import (
     Action,
@@ -85,7 +86,7 @@ class ActionBotfrontForm(Action):
                 # there is nothing more to request, so we can submit
                 self._log_form_slots(temp_tracker)
                 logger.debug(f"Submitting the form '{self.name()}'")
-                events.extend(self.submit(output_channel, nlg, temp_tracker, domain))
+                events.extend(await self.submit(output_channel, nlg, temp_tracker, domain))
                 # deactivate the form after submission
                 events.extend(self.deactivate())
 
@@ -102,7 +103,16 @@ class ActionBotfrontForm(Action):
         tracker: "DialogueStateTracker",
         domain: "Domain",
     ) -> List[Event]:
-        pass
+        events = []
+        utter_on_submit = self.form_spec.get("utter_on_submit", False)
+        collect_in_botfront = self.form_spec.get("collect_in_botfront", False)
+        if utter_on_submit:
+            template = await nlg.generate(
+                f"utter_submit_{self.name()}", tracker, output_channel.name(),
+            )
+            events += [create_bot_utterance(template)]
+        if collect_in_botfront: submit_form_to_botfront(tracker)
+        return events
 
     @staticmethod
     def pointwise_entity_mapping(mapping):
