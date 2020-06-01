@@ -40,7 +40,7 @@ class ActionBotfrontForm(Action):
         for s in self.form_spec.get("slots", []):
             if s.get("name") == slot:
                 return s.get(field, default)
-        return None
+        return default
 
     async def run(
         self,
@@ -119,6 +119,9 @@ class ActionBotfrontForm(Action):
     def pointwise_entity_mapping(mapping):
         """Allows entity arrays to be used with 'from_entity' type"""
         mapping_type, entity = mapping.get("type"), mapping.get("entity")
+        intent, not_intent = mapping.get("intent"), mapping.get("not_intent")
+        if intent and type(intent) != list: mapping["intent"] = [intent]
+        if not_intent and type(not_intent) != list: mapping["not_intent"] = [not_intent]
         if mapping_type == "from_entity":
             if type(entity) != list:
                 entity = [entity]
@@ -127,7 +130,7 @@ class ActionBotfrontForm(Action):
 
     def get_mappings_for_slot(self, slot_to_fill: Text) -> List[Dict[Text, Any]]:
         slot_mappings = self.get_field_for_slot(
-            slot_to_fill, "filling", [{"type": "from_entity", "entity": slot_to_fill,}]
+            slot_to_fill, "filling", [{"type": "from_entity", "entity": slot_to_fill}]
         )
         return functools.reduce(
             lambda acc, curr: acc + self.pointwise_entity_mapping(curr),
