@@ -47,7 +47,7 @@ def validate_with_rule(
     if operator == "contains": return value.contains(comparatum)
     if operator == "starts_with": return value.startswith(comparatum)
     if operator == "ends_with": return value.endswith(comparatum)
-    if operator == "matches": return re.compile(comparatum).match(value)
+    if operator == "matches": return re.compile(comparatum).match(value) is not None
     if operator in NUM_VALIDATION_OPERATORS:
         try: value = float(value)
         except ValueError: return False
