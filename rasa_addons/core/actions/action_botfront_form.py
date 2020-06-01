@@ -71,6 +71,7 @@ class ActionBotfrontForm(Action):
 
             # create temp tracker with populated slots from `validate` method
             temp_tracker = tracker.copy()
+            temp_tracker.sender_id = tracker.sender_id # copy() doesn't necessarily copy sender_id
             for e in events:
                 if isinstance(e, SlotSet):
                     temp_tracker.slots[e.key].value = e.value
