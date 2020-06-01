@@ -30,7 +30,7 @@ def validate_with_rule(
     try:
         if operator not in VALIDATION_OPERATORS:
             raise ValueError(f"Validation operator '{operator}' not suported.")
-        if operator == "is_in" and (not isinstance(comparatum, list) or any([not isinstance(str, e) for e in comparatum])):
+        if operator == "is_in" and (not isinstance(comparatum, list) or any([not isinstance(e, str) for e in comparatum])):
             raise ValueError(f"Validation operator '{operator}' requires a comparatum that's a list of strings.")
         if operator in TEXT_VALIDATION_OPERATORS and not isinstance(comparatum, str):
             raise ValueError(f"Validation operator '{operator}' requires a string comparatum.")
@@ -44,7 +44,7 @@ def validate_with_rule(
     if operator in TEXT_VALIDATION_OPERATORS + ["is_in"] and not isinstance(value, str):
         return False
     if operator == "is_in": return value in comparatum
-    if operator == "contains": return value.contains(comparatum)
+    if operator == "contains": return value in comparatum
     if operator == "starts_with": return value.startswith(comparatum)
     if operator == "ends_with": return value.endswith(comparatum)
     if operator == "matches": return re.compile(comparatum).match(value) is not None
