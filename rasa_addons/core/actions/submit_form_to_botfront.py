@@ -9,10 +9,10 @@ logging.getLogger("sgqlc.endpoint.http").setLevel(logging.WARNING)
 
 SUBMIT_FORM = """
 mutation(
-    $projectId: String!, $environment: String, $tracker: Any!
+    $projectId: String!, $environment: String, $tracker: Any!, $metadata: Any!
 ) {
     submitForm(
-        projectId: $projectId, environment: $environment, tracker: $tracker,
+        projectId: $projectId, environment: $environment, tracker: $tracker, metadata: $metadata,
     ) {
         success
     }
@@ -31,11 +31,16 @@ def submit_form_to_botfront(tracker,) -> None:
     try:
         response = endpoint(
             SUBMIT_FORM,
-            {"projectId": project_id, "environment": environment, "tracker": tracker.current_state()},
+            {
+                "projectId": project_id,
+                "environment": environment,
+                "tracker": tracker.current_state(),
+                "metadata": tracker.latest_message.metadata,
+            },
         )
-        if response.get("errors") or not response.get("data", {}).get("submitForm", {}).get(
-            "success", False
-        ):
+        if response.get("errors") or not response.get("data", {}).get(
+            "submitForm", {}
+        ).get("success", False):
             errors = ", ".join([e.get("message") for e in response.get("errors", [])])
             raise urllib.error.URLError(errors)
     except urllib.error.URLError as e:
