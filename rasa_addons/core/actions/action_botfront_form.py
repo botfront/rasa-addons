@@ -14,13 +14,18 @@ from rasa.core.constants import REQUESTED_SLOT
 
 logger = logging.getLogger(__name__)
 
-"""
-    This is mostly a port of ActionForm from Rasa-SDK, modified
-    to use a JSON API instead of a Python class-based one.
-"""
-
+def clean_none_values(val):
+    # since GraphQL returns null for undefined values, and 
+    if type(val) == list: return [clean_none_values(v) for v in val]
+    if type(val) != dict: return val
+    return {k: clean_none_values(v) for k, v in val.items() if v is not None}
 
 class ActionBotfrontForm(Action):
+    """
+        This is mostly a port of ActionForm from Rasa-SDK, modified
+        to use a JSON API instead of a Python class-based one.
+    """
+
     def __init__(self, name: Text):
         self.action_name = name
         self.form_spec = {}
@@ -53,7 +58,7 @@ class ActionBotfrontForm(Action):
         if not len(self.form_spec):
             for form in tracker.slots.get("bf_forms", {}).initial_value:
                 if form.get("name") == self.name():
-                    self.form_spec = form
+                    self.form_spec = clean_none_values(form)
             if not len(self.form_spec):
                 logger.debug(
                     f"Could not retrieve form '{tracker.active_form}', there is something wrong with your domain."
