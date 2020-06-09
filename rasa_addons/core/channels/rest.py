@@ -31,8 +31,8 @@ class BotfrontRestOutput(CollectingOutputChannel):
             "recipient_id": recipient_id,
             "text": text,
             "image": image,
-            "quick_replies": quick_replies, 
-            "buttons": buttons, 
+            "quick_replies": quick_replies,
+            "buttons": buttons,
             "attachment": attachment,
             "custom": custom,
             "metadata": metadata,
@@ -45,20 +45,12 @@ class BotfrontRestOutput(CollectingOutputChannel):
         self, recipient_id: Text, text: Text, **kwargs: Any
     ) -> None:
         message_parts = text.split("\n\n")
-        for i in range(len(message_parts)):
-            message_part = message_parts[i]
-            if i == len(message_parts) - 1:
-                await self._persist_message(
-                    self._message(
-                        recipient_id,
-                        text=message_part,
-                        metadata=kwargs.get("metadata", {}),
-                    )
+        for message_part in message_parts:
+            await self._persist_message(
+                self._message(
+                    recipient_id, text=message_part, metadata=kwargs.get("metadata", {})
                 )
-            else:
-                await self._persist_message(
-                    self._message(recipient_id, text=message_part)
-                )
+            )
 
     async def send_image_url(
         self, recipient_id: Text, image: Text, **kwargs: Any
