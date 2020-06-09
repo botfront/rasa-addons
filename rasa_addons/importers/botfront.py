@@ -102,11 +102,6 @@ class BotfrontFileImporter(TrainingDataImporter):
                 if slot.name == "bf_forms": bf_forms = slot.initial_value
             bf_forms = [f.get("name") for f in bf_forms]
 
-            # tag with _bf suffix so action.action_from_name can know it is a form
-            # handled by ActionBotfrontForm. actions get doubled but there are no
-            # consequences.
-            domain.action_names += [f + "_bf" for f in bf_forms]
-            domain.form_names += [f + "_bf" for f in bf_forms]
         except InvalidDomain as e:
             logger.warning(
                 "Loading domain from '{}' failed. Using empty domain. Error: '{}'".format(
