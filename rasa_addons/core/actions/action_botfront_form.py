@@ -14,11 +14,15 @@ from rasa.core.constants import REQUESTED_SLOT
 
 logger = logging.getLogger(__name__)
 
+
 def clean_none_values(val):
-    # since GraphQL returns null for undefined values, and 
-    if type(val) == list: return [clean_none_values(v) for v in val]
-    if type(val) != dict: return val
+    # since GraphQL returns null for undefined values, and
+    if type(val) == list:
+        return [clean_none_values(v) for v in val]
+    if type(val) != dict:
+        return val
     return {k: clean_none_values(v) for k, v in val.items() if v is not None}
+
 
 class ActionBotfrontForm(Action):
     """
@@ -46,6 +50,32 @@ class ActionBotfrontForm(Action):
             if s.get("name") == slot:
                 return s.get(field, default)
         return default
+
+    async def validate_prefilled(
+        self,
+        output_channel: "OutputChannel",
+        nlg: "NaturalLanguageGenerator",
+        tracker: "DialogueStateTracker",
+        domain: "Domain",
+    ):
+        # collect values of required slots filled before activation
+        prefilled_slots = {}
+        events = []
+
+        for slot_name in self.required_slots(tracker):
+            if not self._should_request_slot(tracker, slot_name):
+                prefilled_slots[slot_name] = tracker.get_slot(slot_name)
+
+        if prefilled_slots:
+            logger.debug(f"Validating pre-filled required slots: {prefilled_slots}")
+            events.extend(
+                await self.validate_slots(
+                    prefilled_slots, output_channel, nlg, tracker, domain
+                )
+            )
+        else:
+            logger.debug("No pre-filled required slots to validate.")
+        return events
 
     async def run(
         self,
@@ -76,7 +106,9 @@ class ActionBotfrontForm(Action):
 
             # create temp tracker with populated slots from `validate` method
             temp_tracker = tracker.copy()
-            temp_tracker.sender_id = tracker.sender_id # copy() doesn't necessarily copy sender_id
+            temp_tracker.sender_id = (
+                tracker.sender_id
+            )  # copy() doesn't necessarily copy sender_id
             for e in events:
                 if isinstance(e, SlotSet):
                     temp_tracker.slots[e.key].value = e.value
@@ -92,7 +124,9 @@ class ActionBotfrontForm(Action):
                 # there is nothing more to request, so we can submit
                 self._log_form_slots(temp_tracker)
                 logger.debug(f"Submitting the form '{self.name()}'")
-                events.extend(await self.submit(output_channel, nlg, temp_tracker, domain))
+                events.extend(
+                    await self.submit(output_channel, nlg, temp_tracker, domain)
+                )
                 # deactivate the form after submission
                 events.extend(self.deactivate())
 
@@ -117,7 +151,8 @@ class ActionBotfrontForm(Action):
                 f"utter_submit_{self.name()}", tracker, output_channel.name(),
             )
             events += [create_bot_utterance(template)]
-        if collect_in_botfront: submit_form_to_botfront(tracker)
+        if collect_in_botfront:
+            submit_form_to_botfront(tracker)
         return events
 
     @staticmethod
@@ -125,8 +160,10 @@ class ActionBotfrontForm(Action):
         """Allows entity arrays to be used with 'from_entity' type"""
         mapping_type, entity = mapping.get("type"), mapping.get("entity")
         intent, not_intent = mapping.get("intent"), mapping.get("not_intent")
-        if intent and type(intent) != list: mapping["intent"] = [intent]
-        if not_intent and type(not_intent) != list: mapping["not_intent"] = [not_intent]
+        if intent and type(intent) != list:
+            mapping["intent"] = [intent]
+        if not_intent and type(not_intent) != list:
+            mapping["not_intent"] = [not_intent]
         if mapping_type == "from_entity":
             if type(entity) != list:
                 entity = [entity]
@@ -340,9 +377,18 @@ class ActionBotfrontForm(Action):
 
             events += [SlotSet(slot, value if validated else None)]
 
-            events += await self.utter_post_validation(
-                slot, value, validated, output_channel, nlg, tracker, domain
-            )
+            # is it changing during this conversational turn? if it did, then:
+            # either tracker value is different, or if tracker was updated
+            # through regular entity recognition, then this happened in latest event
+            # (will not work if multiple entities were extracted in user utterance)
+            if tracker.get_slot(slot) != value or (
+                isinstance(tracker.events[-1], SlotSet)
+                and tracker.events[-1].key == slot
+                and tracker.events[-1].value == value
+            ):
+                events += await self.utter_post_validation(
+                    slot, value, validated, output_channel, nlg, tracker, domain
+                )
 
         return events
 
@@ -430,25 +476,36 @@ class ActionBotfrontForm(Action):
         else:
             logger.debug(f"Activated the form '{self.name()}'")
             events = [Form(self.name())]
-
-            # collect values of required slots filled before activation
-            prefilled_slots = {}
-
-            for slot_name in self.required_slots(tracker):
-                if not self._should_request_slot(tracker, slot_name):
-                    prefilled_slots[slot_name] = tracker.get_slot(slot_name)
-
-            if prefilled_slots:
-                logger.debug(f"Validating pre-filled required slots: {prefilled_slots}")
-                events.extend(
-                    await self.validate_slots(
-                        prefilled_slots, output_channel, nlg, tracker, domain
-                    )
-                )
-            else:
-                logger.debug("No pre-filled required slots to validate.")
-
+            events.extend(
+                await self.validate_prefilled(output_channel, nlg, tracker, domain)
+            )
             return events
+
+    async def validate_prefilled(
+        self,
+        output_channel: "OutputChannel",
+        nlg: "NaturalLanguageGenerator",
+        tracker: "DialogueStateTracker",
+        domain: "Domain",
+    ):
+        # collect values of required slots filled before activation
+        prefilled_slots = {}
+        events = []
+
+        for slot_name in self.required_slots(tracker):
+            if not self._should_request_slot(tracker, slot_name):
+                prefilled_slots[slot_name] = tracker.get_slot(slot_name)
+
+        if prefilled_slots:
+            logger.debug(f"Validating pre-filled required slots: {prefilled_slots}")
+            events.extend(
+                await self.validate_slots(
+                    prefilled_slots, output_channel, nlg, tracker, domain
+                )
+            )
+        else:
+            logger.debug("No pre-filled required slots to validate.")
+        return events
 
     async def _validate_if_required(
         self,
