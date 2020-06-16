@@ -74,6 +74,7 @@ class BotfrontTemplatedNaturalLanguageGenerator(NaturalLanguageGenerator):
             fallback_language_slot.initial_value if fallback_language_slot else None
         )
         language = tracker.latest_message.metadata.get("language") or fallback_language
+        if "fallback_language" in kwargs: del kwargs["fallback_language"]
 
         message = self.generate_from_slots(
             template_name,
