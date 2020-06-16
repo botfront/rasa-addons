@@ -1,7 +1,7 @@
 import logging
 import os
 import copy
-from typing import Optional, Text, Union, List, Dict
+from typing import Optional, Text, Union, List, Dict, Any
 
 from rasa import data
 from rasa.core.domain import Domain, InvalidDomain
@@ -97,6 +97,11 @@ class BotfrontFileImporter(TrainingDataImporter):
         try:
             domain = Domain.load(self._domain_path)
             domain.check_missing_templates()
+            bf_forms = []
+            for slot in domain.slots:
+                if slot.name == "bf_forms": bf_forms = slot.initial_value
+            bf_forms = [f.get("name") for f in bf_forms]
+
         except InvalidDomain as e:
             logger.warning(
                 "Loading domain from '{}' failed. Using empty domain. Error: '{}'".format(
