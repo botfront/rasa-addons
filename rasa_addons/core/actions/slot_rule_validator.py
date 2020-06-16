@@ -13,7 +13,7 @@ TEXT_VALUE_OPERATORS = [
     "longer",
     "longer_or_equal",
     "shorter",
-    "short_or_equal",
+    "shorter_or_equal",
     "email",
     "word",
 ]
@@ -84,6 +84,11 @@ def validate_with_rule(value, validation_rule) -> bool:
         return False
     if operator in TEXT_VALUE_OPERATORS and not isinstance(value, str):
         return False
+    if operator in NUM_VALUE_OPERATORS:
+        try:
+            value = float(value)
+        except ValueError:
+            return False
     if operator == "is_in":
         return value in comparatum
     if operator == "contains":

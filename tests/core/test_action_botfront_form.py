@@ -172,6 +172,13 @@ def test_extract_requested_slot_from_text_with_not_intent():
         ("eq", "5", 5, True),
         ("eq", "5", "a", None),
         ("gt", 4, 5, False),
+        ("shorter_or_equal", "hey", "3", True),
+        ("shorter_or_equal", "heya", "3", False),
+        ("shorter_or_equal", "heya", "a", None),
+        ("email", "joe@hotmail.com", None, True),
+        ("email", "joe@ hotmail.com", None, False),
+        ("word", "joe is", None, False),
+        ("word", "joe", None, True),
     ],
 )
 async def test_validation(value, operator, comparatum, result, caplog):
