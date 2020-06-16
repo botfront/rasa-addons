@@ -91,8 +91,10 @@ def validate_with_rule(value, validation_rule) -> bool:
             return False
     if operator == "is_in":
         return value in comparatum
+    if operator == "is_exactly":
+        return value == comparatum
     if operator == "contains":
-        return value in comparatum
+        return comparatum in value
     if operator == "starts_with":
         return value.startswith(comparatum)
     if operator == "ends_with":

@@ -166,8 +166,8 @@ def test_extract_requested_slot_from_text_with_not_intent():
 @pytest.mark.parametrize(
     "operator, value, comparatum, result", [
         ("is_in", "hey", ["hey", "ho", "fee"], True),
-        ("is_exactly", "hey", "aheya", False),
-        ("contains", "hey", "aheya", True),
+        ("is_exactly", "aheya", "hey", False),
+        ("contains", "aheya", "hey", True),
         ("ends_with", "hey", 5, None),
         ("eq", "5", 5, True),
         ("eq", "5", "a", None),
